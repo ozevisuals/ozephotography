@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Oze Photography</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050505;
+  --fg:#ffffff;
+  --muted:#a0a0a0;
+  --accent:#c1121f;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--fg);
+  overflow:hidden;
+  height:100vh;
+}
+
+/* OPENING CINEMATIC */
+.loader{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  animation:fadeOut 1.2s ease forwards;
+  animation-delay:1.4s;
+}
+
+.loader span{
+  font-family:'Playfair Display',serif;
+  font-size:36px;
+  letter-spacing:.3em;
+}
+
+@keyframes fadeOut{
+  to{opacity:0;visibility:hidden}
+}
+
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  padding:26px 60px;
+  display:flex;
+  justify-content:space-between;
+  z-index:10;
+}
+
+header a{
+  font-size:13px;
+  letter-spacing:.2em;
+  text-decoration:none;
+  color:var(--fg);
+}
+
+/* GRID */
+main{
+  height:100vh;
+  padding:120px 60px 60px;
+  overflow-y:auto;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:40px;
+}
+
+.card{
+  position:relative;
+  overflow:hidden;
+  border-radius:18px;
+}
+
+.card img{
+  width:100%;
+  height:480px;
+  object-fit:cover;
+  transform:scale(1.08);
+  transition:transform 1.6s ease;
+  cursor:pointer;
+}
+
+.card:hover img{
+  transform:scale(1);
+}
+
+.card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.55), transparent);
+  opacity:0;
+  transition:opacity .6s ease;
+}
+
+.card:hover::after{
+  opacity:1;
+}
+
+/* TITLE FLOAT */
+.title{
+  position:absolute;
+  bottom:28px;
+  left:28px;
+  font-family:'Playfair Display',serif;
+  font-size:22px;
+  opacity:0;
+  transform:translateY(10px);
+  transition:.6s ease;
+}
+
+.card:hover .title{
+  opacity:1;
+  transform:none;
+}
+
+/* SCROLLBAR */
+main::-webkit-scrollbar{width:6px}
+main::-webkit-scrollbar-thumb{background:#222}
+
+/* MOBILE */
+@media(max-width:800px){
+  main{padding:100px 20px}
+  .card img{height:360px}
+}
+
+/* FULLSCREEN */
+.fullscreen{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:3000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .6s ease;
+}
+
+.fullscreen.show{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.fullscreen img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  animation:cinemaIn .8s ease;
+}
+
+/* DOWNLOAD */
+.download{
+  position:absolute;
+  bottom:40px;
+  right:40px;
+  font-size:13px;
+  letter-spacing:.15em;
+  padding:12px 22px;
+  border:1px solid #fff;
+  color:#fff;
+  text-decoration:none;
+  opacity:.75;
+  transition:.3s ease;
+}
+
+.download:hover{
+  opacity:1;
+}
+
+/* CLOSE BUTTON */
+.close-btn{
+  position:absolute;
+  top:40px;
+  right:40px;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:30px;
+  cursor:pointer;
+  z-index:3001;
+  opacity:.75;
+  transition:.3s ease;
+}
+.close-btn:hover{
+  opacity:1;
+}
+
+/* NAV BUTTONS */
+.nav-btn{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:60px;
+  padding:0 20px;
+  cursor:pointer;
+  z-index:3001;
+  opacity:.75;
+  transition:.3s ease;
+  user-select:none;
+}
+.nav-btn:hover{
+  opacity:1;
+}
+.prev{left:0}
+.next{right:0}
+
+@keyframes cinemaIn{
+  from{transform:scale(1.05);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<div class="loader">
+  <span>WELCOME TO OZE PHOTOGRAPHY</span>
+</div>
+
+<header>
+  <a href="index.html">← BACK</a>
+  <a href="#">OZE PHOTOGRAPHY</a>
+</header>
+
+<main>
+  <div class="grid">
+
+    <div class="card">
+      <img src="images/work (4).jpg" alt="">
+      <div class="title">Editorial Mood</div>
+    </div>
+
+    <div class="card">
+      <img src="images/work (5).jpg" alt="">
+      <div class="title">Fashion Silence</div>
+    </div>
+
+    <div class="card">
+      <img src="images/work (1).jpg" alt="">
+      <div class="title">Portrait Light</div>
+    </div>
+
+    <div class="card">
+      <img src="images/work (2).jpg" alt="">
+      <div class="title">Urban Soul</div>
+    </div>
+    
+    <div class="card">
+      <img src="images/wedding.jpg" alt="wedding"">
+      <div class="title">wedding photography</div>
+      </div>
+
+      <div class="card">
+      <img src="images/shot.jpg" alt="">
+      <div class="title">amazing shot</div>
+    </div>
+
+    <div class="card">
+      <img src="images/shot (2).jpg" alt="">
+      <div class="title">amazing</div>
+    </div>
+
+    <div class="card">
+      <img src="images/graduation (1).jpg" alt="">
+      <div class="title">graduation</div>
+    </div>
+
+    <div class="card">
+      <img src="images/graduation (2).jpg" alt="">
+      <div class="title">graduation</div>
+    </div>
+
+    <div class="card">
+      <img src="images/wedding (3).jpg" alt="">
+      <div class="title">wedding photography</div>
+    </div>
+    
+  </div>
+</main>
+
+<!-- FULLSCREEN -->
+<div class="fullscreen" id="fullscreen">
+  <button class="close-btn" id="closeBtn">✕</button>
+  <button class="nav-btn prev" id="prevBtn">‹</button>
+  <button class="nav-btn next" id="nextBtn">›</button>
+  <img id="fullscreenImg" alt="">
+  <a class="download" id="downloadBtn" download>DOWNLOAD</a>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const fullscreen = document.getElementById('fullscreen');
+  const fullscreenImg = document.getElementById('fullscreenImg');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const closeBtn = document.getElementById('closeBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const cards = document.querySelectorAll('.card');
+  let currentIndex = 0;
+
+  cards.forEach((card, index) => {
+    card.addEventListener('click', () => {
+      currentIndex = index;
+      const img = card.querySelector('img');
+      fullscreenImg.src = img.src;
+      downloadBtn.href = img.src;
+      fullscreen.classList.add('show');
+    });
+  });
+
+  fullscreenImg.addEventListener('click', e => e.stopPropagation());
+
+  fullscreen.addEventListener('click', () => {
+    fullscreen.classList.remove('show');
+  });
+
+  closeBtn.addEventListener('click', () => {
+    fullscreen.classList.remove('show');
+  });
+
+  const updateImage = () => {
+    const img = cards[currentIndex].querySelector('img');
+    fullscreenImg.src = img.src;
+    downloadBtn.href = img.src;
+  };
+
+  prevBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+    updateImage();
+  });
+
+  nextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentIndex = (currentIndex + 1) % cards.length;
+    updateImage();
+  });
+
+});
+</script>
+
+</body>
+</html>
