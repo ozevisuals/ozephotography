@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oze Photography</title>
+  <title id="page-title">Oze Photography</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -15,6 +15,7 @@
     body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden}
     a{text-decoration:none;color:inherit}
 
+
     /* HEADER */
     header{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:22px 70px;z-index:100;background:linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));backdrop-filter:saturate(120%);transition:background .3s ease, padding .3s ease}
     header.scrolled{background:rgba(11,11,11,.9);padding:16px 70px}
@@ -22,6 +23,7 @@
     nav a{margin-left:28px;font-size:14px;opacity:.9;position:relative}
     nav a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:1px;background:var(--fg);transition:width .25s ease}
     nav a:hover::after{width:100%}
+
 
     /* HERO */
     .hero{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;padding:120px 70px 60px;gap:40px}
@@ -37,9 +39,11 @@
     .hero-image::after{content:"";position:absolute;inset:-10% -10% -10% -10%;background:radial-gradient(60% 60% at 70% 30%, rgba(193,18,31,.35), rgba(0,0,0,0) 60%);pointer-events:none}
     .hero-image img{width:100%;max-height:85vh;object-fit:contain;filter:contrast(1.05) saturate(1.05)}
 
+
     /* TRUST */
     .trust{display:flex;justify-content:center;gap:56px;padding:36px 20px;border-top:1px solid #222}
     .trust div{font-size:13px;color:#ddd}
+
 
     /* GALLERY */
     .gallery{padding:90px 70px}
@@ -48,12 +52,14 @@
     .grid img{width:100%;height:320px;object-fit:cover;border-radius:14px;transition:transform .35s ease, box-shadow .35s ease;cursor:pointer}
     .grid img:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 50px rgba(0,0,0,.6)}
 
+
     /* ABOUT & CONTACT */
     .about-section, .contact-section{padding:90px 70px;text-align:center;max-width:900px;margin:0 auto}
     .about-section h2, .contact-section h2{font-family:'Playfair Display',serif;font-size:36px;margin-bottom:36px}
     .about-section p, .contact-section p{font-size:16px;line-height:1.8;margin-bottom:24px;color:#ddd}
     .contact-section a{border-bottom:1px solid #444;transition:color .3s ease, border-color .3s ease}
     .contact-section a:hover{color:var(--accent);border-color:var(--accent)}
+
 
     /* SOCIAL ICONS */
     .social-icons{display:flex;justify-content:center;gap:32px;margin:32px 0 10px}
@@ -64,6 +70,7 @@
     .social-icons a:hover .fa-whatsapp{color:#25D366}
     .social-icons a:hover .fa-envelope{color:#EA4335}
 
+
     /* SERVICES OVERLAY */
     .services-overlay{position:fixed;inset:0;background:rgba(11,11,11,.96);backdrop-filter:blur(12px);z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .5s ease}
     .services-overlay.active{opacity:1;pointer-events:auto}
@@ -73,20 +80,24 @@
     .services-overlay.active .service-item{opacity:1;transform:none;transition:opacity .5s ease, transform .5s ease}
     .services-note{margin-top:40px;font-size:14px;color:var(--muted);letter-spacing:.1em;opacity:0;transition:opacity .5s ease .5s}
     .services-overlay.active .services-note{opacity:1}
-    
+   
     .service-item:nth-child(1){transition-delay:.1s} .service-item:nth-child(2){transition-delay:.15s}
     .service-item:nth-child(3){transition-delay:.2s} .service-item:nth-child(4){transition-delay:.25s}
     .service-item:nth-child(5){transition-delay:.3s} .service-item:nth-child(6){transition-delay:.35s}
     .service-item:nth-child(7){transition-delay:.4s} .service-item:nth-child(8){transition-delay:.45s}
 
+
     @media(max-width:700px){.services-grid{grid-template-columns:1fr;gap:12px}.service-item{padding:16px}}
+
 
     /* FOOTER */
     footer{padding:36px 70px;border-top:1px solid #222;display:flex;justify-content:space-between;gap:20px;font-size:13px;color:#bbb}
 
+
     /* REVEAL */
     .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
     .reveal.show{opacity:1;transform:none}
+
 
     /* RESPONSIVE */
     @media (max-width:900px){
@@ -98,6 +109,7 @@
       .gallery,footer,.about-section,.contact-section{padding:60px 20px}
       .grid img{height:260px}
     }
+
 
     /* ===== FULLSCREEN IMAGE VIEW (ADDED) ===== */
     .lightbox{
@@ -114,6 +126,7 @@
       height:100%;
       object-fit:contain;
     }
+
 
     /* ===== BOOKING MODAL (ADDED) ===== */
     .booking-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .5s ease}
@@ -132,47 +145,13 @@
     .submit-btn:hover{transform:translateY(-2px);box-shadow:0 0 25px rgba(193,18,31,.4)}
     .submit-btn:active{transform:scale(.98)}
     ::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.6;cursor:pointer}
-
-    /* (CSS ADDITION) RESPONSIVE NAVIGATION */
-    .hamburger{display:none;background:none;border:none;cursor:pointer;padding:10px;z-index:200}
-    .hamburger span{display:block;width:24px;height:2px;background:var(--fg);margin:6px 0;transition:.3s ease}
-
-    @media(max-width:1023px){
-      header{backdrop-filter:none;background:rgba(11,11,11,.9)}
-      .hamburger{display:block}
-      nav{
-        display:flex !important;
-        position:fixed;inset:0;background:var(--bg);
-        flex-direction:column;justify-content:center;align-items:center;
-        z-index:150;opacity:0;visibility:hidden;pointer-events:none;
-        transition:opacity .4s ease, visibility .4s
-      }
-      nav.active{opacity:1;visibility:visible;pointer-events:auto}
-      nav a{
-        font-family:'Playfair Display',serif;font-size:32px;margin:20px 0;
-        opacity:0;transform:translateY(15px);transition:.4s ease
-      }
-      nav.active a{opacity:1;transform:none}
-      nav.active a:nth-child(1){transition-delay:.1s}
-      nav.active a:nth-child(2){transition-delay:.15s}
-      nav.active a:nth-child(3){transition-delay:.2s}
-      nav.active a:nth-child(4){transition-delay:.25s}
-      nav.active a:nth-child(5){transition-delay:.3s}
-
-      .hamburger.active span:nth-child(1){transform:translateY(8px) rotate(45deg)}
-      .hamburger.active span:nth-child(2){opacity:0}
-      .hamburger.active span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
-    }
   </style>
 </head>
 <body>
 
+
 <header>
   <div class="logo">OZE.</div>
-  <!-- (HTML ADDITION) HAMBURGER BUTTON -->
-  <button class="hamburger" id="hamburger" aria-label="Toggle Menu">
-    <span></span><span></span><span></span>
-  </button>
   <nav>
     <a href="#">Home</a>
     <a href="portfolio.html">Portfolio</a>
@@ -182,8 +161,9 @@
   </nav>
 </header>
 
+
 <section class="hero">
-  <div class="hero-text">
+  <div class="hero-text" id="page-content">
     <h1>OZE<br>PHOTOGRAPHY</h1>
     <p>Capturing Moments.<br>Creating Stories.</p>
     <span>Portrait • Fashion • Editorial • Events</span>
@@ -193,10 +173,12 @@
     </div>
   </div>
 
+
   <div class="hero-image">
     <img src="images/ozesite.jpeg" alt="Oze Photography">
   </div>
 </section>
+
 
 <section class="trust">
   <div>✔ Professional Photography</div>
@@ -204,7 +186,9 @@
   <div>✔ Trusted by Clients & Brands</div>
 </section>
 
+
 <section class="gallery" id="portfolio">
+
 
   <h2>SOME IN GALLERY</h2>
   <div class="grid">
@@ -212,10 +196,9 @@
     <img src="images/work (2).jpg" alt="work">
     <img src="images/work (3).jpg" alt="work">
     <img src="images/work (4).jpg" alt="work">
-    <img src="images/graduation (1).jpg" alt="graduation">
-    <img src="images/shot (2).jpg" alt="shot">
   </div>
 </section>
+
 
 <section id="about" class="about-section">
   <h2>About Oze Photography</h2>
@@ -225,30 +208,36 @@
     high-quality images that tell meaningful stories through light, composition, and detail.
   </p>
 
+
   <p>
     Driven by passion and creativity, Oze Photography specializes in portrait, lifestyle, and event
     photography. Every project is approached with care, professionalism, and a strong artistic vision
     to ensure each image reflects authenticity and beauty.
   </p>
 
+
   <p>At Oze Blaise Photography, we believe every image should speak for itself. With a professional approach and creative eye, we help clients capture memories that last a lifetime.
 Whether it’s portraits, celebrations, or branding, we deliver stunning visuals that reflect who you are and what matters most to you.
   </p>
 </section>
 
+
 <section id="contact" class="contact-section">
   <h2>Contact</h2>
   <p>Let’s work together and bring your vision to life.</p>
+
 
   <p>
     <strong>Email:</strong>
     <a href="mailto:ozeblaise10@gmail.com">ozeblaise10@gmail.com</a>
   </p>
 
+
   <p>
     <strong>WhatsApp / Call:</strong>
     <a href="tel:+250780321661">+250 780 321 661</a>
   </p>
+
 
   <div class="social-icons">
     <a href="https://instagram.com/oze_blaise" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -256,10 +245,12 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     <a href="mailto:ozeblaise10@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
   </div>
 
+
   <p class="contact-note">
     Available for bookings, collaborations, and creative projects.
   </p>
 </section>
+
 
 <section class="services-overlay" id="servicesOverlay">
   <div class="services-grid">
@@ -275,14 +266,17 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
   <div class="services-note">And more photography services available upon request.</div>
 </section>
 
+
 <footer>
-  <div>© 2025 Oze Photography. All rights reserved.</div>
+  <div>© 2026 Oze Photography. All rights reserved.</div>
 </footer>
+
 
 <!-- FULLSCREEN IMAGE CONTAINER (ADDED) -->
 <div class="lightbox" id="lightbox">
   <img id="lightbox-img">
 </div>
+
 
 <!-- BOOKING MODAL (ADDED) -->
 <div class="booking-overlay" id="bookingModal">
@@ -312,19 +306,23 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
   </div>
 </div>
 
+
 <script>
   const header = document.querySelector('header');
   window.addEventListener('scroll',()=>{
     header.classList.toggle('scrolled', window.scrollY > 30);
   });
 
+
   const reveals = document.querySelectorAll('.hero-text, .hero-image, .trust, .gallery h2, .grid img, footer, .about-section, .contact-section');
   reveals.forEach(el=>el.classList.add('reveal'));
+
 
   const io = new IntersectionObserver(entries=>{
     entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); });
   },{threshold:0.15});
   reveals.forEach(el=>io.observe(el));
+
 
   const heroImg = document.querySelector('.hero-image img');
   window.addEventListener('mousemove',(e)=>{
@@ -333,9 +331,11 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     heroImg.style.transform = `translate(${x}px, ${y}px)`;
   });
 
+
   /* ===== FULLSCREEN IMAGE LOGIC (ADDED) ===== */
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
+
 
   document.querySelectorAll('.grid img').forEach(img=>{
     img.addEventListener('click',()=>{
@@ -344,9 +344,11 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     });
   });
 
+
   lightbox.addEventListener('click',()=>{
     lightbox.style.display = 'none';
   });
+
 
   /* ===== SERVICES TOGGLE ===== */
   const servicesLink = Array.from(document.querySelectorAll('nav a')).find(a => a.textContent.trim() === 'Services');
@@ -358,11 +360,13 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     });
   }
 
+
   /* ===== BOOKING MODAL LOGIC (ADDED) ===== */
   const bookingBtn = document.querySelector('.btn-solid');
   const bookingModal = document.getElementById('bookingModal');
   const closeBooking = document.getElementById('closeBooking');
   const bookingForm = document.getElementById('bookingForm');
+
 
   if(bookingBtn){
     bookingBtn.addEventListener('click', (e) => {
@@ -370,6 +374,7 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
       bookingModal.classList.add('active');
     });
   }
+
 
   const closeBookingModal = () => bookingModal.classList.remove('active');
   if(closeBooking) closeBooking.addEventListener('click', closeBookingModal);
@@ -380,6 +385,7 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     if(e.key === 'Escape' && bookingModal.classList.contains('active')) closeBookingModal();
   });
 
+
   bookingForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const service = document.getElementById('b-service').value;
@@ -387,28 +393,49 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     const location = document.getElementById('b-location').value;
     const phone = document.getElementById('b-phone').value;
     const text = `Hello Oze Photography,%0A%0AI would like to book a session.%0A%0AService: ${service}%0ADate: ${date}%0ALocation: ${location}%0APhone: ${phone}`;
+
+    fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ name: "Booking Request", email: "booking@oze.site", phone: phone, message: text.replace(/%0A/g, '\n'), read: false, created_at: new Date() })
+    }).catch(console.error);
+
     window.open(`https://wa.me/250780321661?text=${text}`, '_blank');
     window.location.href = `mailto:ozeblaise10@gmail.com?subject=Booking Request&body=${text.replace(/%0A/g, '%0D%0A')}`;
     closeBookingModal();
     bookingForm.reset();
   });
-
-  /* (JS ADDITION) MOBILE MENU LOGIC */
-  const ham = document.getElementById('hamburger');
-  const nv = document.querySelector('nav');
-  if(ham && nv){
-    ham.addEventListener('click', () => {
-      ham.classList.toggle('active');
-      nv.classList.toggle('active');
-      document.body.style.overflow = nv.classList.contains('active') ? 'hidden' : '';
-    });
-    nv.querySelectorAll('a').forEach(l => l.addEventListener('click', () => {
-      ham.classList.remove('active');
-      nv.classList.remove('active');
-      document.body.style.overflow = '';
-    }));
-  }
 </script>
 
+
+<script>
+/* ================= SUPABASE CONFIG ================= */
+const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
+
+/* ================= LOAD HOME PAGE CONTENT ================= */
+fetch(`${SUPABASE_URL}/rest/v1/pages?page=eq.home`, {
+  headers: {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`
+  }
+})
+.then(res => res.json())
+.then(data => {
+  if (!data || !data.length) return;
+
+  const titleEl = document.getElementById("page-title");
+  const contentEl = document.getElementById("page-content");
+
+  if (titleEl) titleEl.innerHTML = data[0].title;
+  if (contentEl) contentEl.innerHTML = data[0].content;
+})
+.catch(err => console.error("Home CMS load error:", err));
+</script>
 </body>
 </html>

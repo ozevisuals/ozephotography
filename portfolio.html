@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio — Oze Photography</title>
 
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
 
 <style>
 :root{
@@ -15,7 +17,9 @@
   --accent:#c1121f;
 }
 
+
 *{margin:0;padding:0;box-sizing:border-box}
+
 
 body{
   font-family:'Inter',sans-serif;
@@ -24,6 +28,7 @@ body{
   overflow:hidden;
   height:100vh;
 }
+
 
 /* OPENING CINEMATIC */
 .loader{
@@ -38,15 +43,18 @@ body{
   animation-delay:1.4s;
 }
 
+
 .loader span{
   font-family:'Playfair Display',serif;
   font-size:36px;
   letter-spacing:.3em;
 }
 
+
 @keyframes fadeOut{
   to{opacity:0;visibility:hidden}
 }
+
 
 /* HEADER */
 header{
@@ -59,12 +67,14 @@ header{
   z-index:10;
 }
 
+
 header a{
   font-size:13px;
   letter-spacing:.2em;
   text-decoration:none;
   color:var(--fg);
 }
+
 
 /* GRID */
 main{
@@ -73,17 +83,20 @@ main{
   overflow-y:auto;
 }
 
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
   gap:40px;
 }
 
+
 .card{
   position:relative;
   overflow:hidden;
   border-radius:18px;
 }
+
 
 .card img{
   width:100%;
@@ -94,9 +107,11 @@ main{
   cursor:pointer;
 }
 
+
 .card:hover img{
   transform:scale(1);
 }
+
 
 .card::after{
   content:"";
@@ -107,9 +122,11 @@ main{
   transition:opacity .6s ease;
 }
 
+
 .card:hover::after{
   opacity:1;
 }
+
 
 /* TITLE FLOAT */
 .title{
@@ -123,20 +140,24 @@ main{
   transition:.6s ease;
 }
 
+
 .card:hover .title{
   opacity:1;
   transform:none;
 }
 
+
 /* SCROLLBAR */
 main::-webkit-scrollbar{width:6px}
 main::-webkit-scrollbar-thumb{background:#222}
+
 
 /* MOBILE */
 @media(max-width:800px){
   main{padding:100px 20px}
   .card img{height:360px}
 }
+
 
 /* FULLSCREEN */
 .fullscreen{
@@ -152,10 +173,12 @@ main::-webkit-scrollbar-thumb{background:#222}
   transition:opacity .6s ease;
 }
 
+
 .fullscreen.show{
   opacity:1;
   pointer-events:auto;
 }
+
 
 .fullscreen img{
   width:100%;
@@ -163,6 +186,7 @@ main::-webkit-scrollbar-thumb{background:#222}
   object-fit:contain;
   animation:cinemaIn .8s ease;
 }
+
 
 /* DOWNLOAD */
 .download{
@@ -179,9 +203,11 @@ main::-webkit-scrollbar-thumb{background:#222}
   transition:.3s ease;
 }
 
+
 .download:hover{
   opacity:1;
 }
+
 
 /* CLOSE BUTTON */
 .close-btn{
@@ -200,6 +226,7 @@ main::-webkit-scrollbar-thumb{background:#222}
 .close-btn:hover{
   opacity:1;
 }
+
 
 /* NAV BUTTONS */
 .nav-btn{
@@ -223,6 +250,7 @@ main::-webkit-scrollbar-thumb{background:#222}
 .prev{left:0}
 .next{right:0}
 
+
 @keyframes cinemaIn{
   from{transform:scale(1.05);opacity:0}
   to{transform:scale(1);opacity:1}
@@ -230,72 +258,52 @@ main::-webkit-scrollbar-thumb{background:#222}
 </style>
 </head>
 
+
 <body>
+
 
 <div class="loader">
   <span>WELCOME TO OZE PHOTOGRAPHY</span>
 </div>
+
 
 <header>
   <a href="index.html">← BACK</a>
   <a href="#">OZE PHOTOGRAPHY</a>
 </header>
 
+
 <main>
-  <div class="grid">
+  <div class="grid" id="portfolio-content">
+
 
     <div class="card">
       <img src="images/work (4).jpg" alt="">
       <div class="title">Editorial Mood</div>
     </div>
 
+
     <div class="card">
       <img src="images/work (5).jpg" alt="">
       <div class="title">Fashion Silence</div>
     </div>
+
 
     <div class="card">
       <img src="images/work (1).jpg" alt="">
       <div class="title">Portrait Light</div>
     </div>
 
+
     <div class="card">
       <img src="images/work (2).jpg" alt="">
       <div class="title">Urban Soul</div>
     </div>
-    
-    <div class="card">
-      <img src="images/wedding.jpg" alt="wedding"">
-      <div class="title">wedding photography</div>
-      </div>
 
-      <div class="card">
-      <img src="images/shot.jpg" alt="">
-      <div class="title">amazing shot</div>
-    </div>
 
-    <div class="card">
-      <img src="images/shot (2).jpg" alt="">
-      <div class="title">amazing</div>
-    </div>
-
-    <div class="card">
-      <img src="images/graduation (1).jpg" alt="">
-      <div class="title">graduation</div>
-    </div>
-
-    <div class="card">
-      <img src="images/graduation (2).jpg" alt="">
-      <div class="title">graduation</div>
-    </div>
-
-    <div class="card">
-      <img src="images/wedding (3).jpg" alt="">
-      <div class="title">wedding photography</div>
-    </div>
-    
   </div>
 </main>
+
 
 <!-- FULLSCREEN -->
 <div class="fullscreen" id="fullscreen">
@@ -306,8 +314,10 @@ main::-webkit-scrollbar-thumb{background:#222}
   <a class="download" id="downloadBtn" download>DOWNLOAD</a>
 </div>
 
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
 
   const fullscreen = document.getElementById('fullscreen');
   const fullscreenImg = document.getElementById('fullscreenImg');
@@ -317,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const nextBtn = document.getElementById('nextBtn');
   const cards = document.querySelectorAll('.card');
   let currentIndex = 0;
+
 
   cards.forEach((card, index) => {
     card.addEventListener('click', () => {
@@ -328,15 +339,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+
   fullscreenImg.addEventListener('click', e => e.stopPropagation());
+
 
   fullscreen.addEventListener('click', () => {
     fullscreen.classList.remove('show');
   });
 
+
   closeBtn.addEventListener('click', () => {
     fullscreen.classList.remove('show');
   });
+
 
   const updateImage = () => {
     const img = cards[currentIndex].querySelector('img');
@@ -344,11 +359,13 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBtn.href = img.src;
   };
 
+
   prevBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     currentIndex = (currentIndex - 1 + cards.length) % cards.length;
     updateImage();
   });
+
 
   nextBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -356,6 +373,34 @@ document.addEventListener('DOMContentLoaded', () => {
     updateImage();
   });
 
+
+});
+</script>8
+
+<script>
+/* ================= SUPABASE CONFIG ================= */
+const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
+
+/* ================= FETCH PORTFOLIO DATA ================= */
+fetch(`${SUPABASE_URL}/rest/v1/pages?page=eq.portfolio`, {
+  headers: {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`
+  }
+})
+.then(res => res.json())
+.then(data => {
+  // FIX: Only update if data exists. If empty, keep local images. Silent fallback.
+  if (data && data.length > 0) {
+    document.getElementById("portfolio-content").innerHTML = data[0].content;
+    alert("ACCEPT ✅: Portfolio CMS loaded");
+  }
+  // If data.length === 0, DO NOTHING. No else block.
+})
+.catch(err => {
+  // Silent catch. No alert.
+  console.error("CMS fetch failed, using local fallback:", err);
 });
 </script>
 

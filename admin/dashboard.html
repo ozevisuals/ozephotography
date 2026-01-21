@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Oze Visual Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+(async function() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || session.user.user_metadata.role !== 'admin') {
+        if (session) await supabase.auth.signOut();
+        window.location.href = "login.html";
+    }
+})();
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* --- THEME VARIABLES --- */
+    :root {
+        --bg-app: #0f172a;
+        --bg-panel: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-hover: #0ea5e9;
+        --border: #334155;
+        --sidebar-width: 260px;
+        --sidebar-collapsed: 70px;
+        --header-height: 64px;
+        --danger: #ef4444;
+        --success: #22c55e;
+    }
+
+    body.light-theme {
+        --bg-app: #f1f5f9;
+        --bg-panel: #ffffff;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+   
+    body {
+        display: flex;
+        height: 100vh;
+        background-color: var(--bg-app);
+        color: var(--text-main);
+        overflow: hidden;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .sidebar {
+        width: var(--sidebar-width);
+        background-color: var(--bg-panel);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+    }
+
+    .brand {
+        height: var(--header-height);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .nav-menu {
+        flex: 1;
+        padding: 24px 12px;
+        overflow-y: auto;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 6px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .nav-item:hover {
+        background-color: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+    }
+
+    .nav-item.active {
+        background-color: var(--accent);
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .nav-item i {
+        width: 24px;
+        margin-right: 12px;
+        font-size: 18px;
+        text-align: center;
+    }
+
+    .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .topbar {
+        height: var(--header-height);
+        background-color: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+    }
+
+    .viewport-controls {
+        display: flex;
+        background: var(--bg-app);
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
+
+    .vp-btn {
+        padding: 8px 14px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: 6px;
+        transition: 0.2s;
+    }
+
+    .vp-btn:hover { color: var(--text-main); }
+    .vp-btn.active { background: var(--bg-panel); color: var(--text-main); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+    .actions { display: flex; gap: 12px; }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.05); }
+   
+    .btn-primary {
+        background: var(--accent);
+        color: #0f172a;
+        border-color: var(--accent);
+    }
+   
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .workspace {
+        flex: 1;
+        background-color: #111;
+        background-image: radial-gradient(#333 1px, transparent 1px);
+        background-size: 20px 20px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px;
+        overflow: auto;
+    }
+
+    .iframe-wrapper {
+        background: white;
+        transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1), height 0.4s ease;
+        box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+        background: #fff;
+    }
+
+    .modal-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+   
+    .modal-overlay.active { display: flex; opacity: 1; }
+
+    .modal {
+        background: var(--bg-panel);
+        width: 90%; max-width: 500px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        padding: 32px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+   
+    .modal-overlay.active .modal { transform: translateY(0); }
+
+    .modal h3 { margin-bottom: 24px; font-size: 20px; color: var(--text-main); }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+   
+    .form-control {
+        width: 100%; padding: 12px;
+        background: var(--bg-app);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+        border-radius: 8px;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+   
+    .form-control:focus { border-color: var(--accent); }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
+
+    .toast {
+        position: fixed; bottom: 32px; right: 32px;
+        background: var(--success); color: #fff;
+        padding: 14px 24px; border-radius: 8px;
+        font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateY(100px); opacity: 0;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 200; display: flex; align-items: center; gap: 10px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* --- MEDIA MANAGER STYLES --- */
+    #mediaModal .modal {
+        max-width: 900px;
+        width: 90%;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+    }
+
+    .media-manager {
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+        background: #ffffff; /* White background as requested */
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        color: #0f172a; /* Dark text for white bg */
+    }
+
+    .media-header {
+        padding: 16px 24px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .media-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .media-close {
+        background: none; border: none;
+        color: #64748b; cursor: pointer;
+        font-size: 20px; transition: 0.2s;
+    }
+    .media-close:hover { color: #ef4444; }
+
+    .media-upload-btn {
+        position: relative;
+        overflow: hidden;
+        background: var(--accent);
+        color: #0f172a;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+    .media-upload-btn:hover { background: var(--accent-hover); }
+    .media-upload-btn input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    .media-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .media-section { margin-bottom: 40px; }
+   
+    .media-section-head {
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+
+    .media-card {
+        aspect-ratio: 1;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .media-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        border-color: var(--accent);
+    }
+
+    .media-img-wrap {
+        width: 100%; height: 100%;
+        background-color: #f1f5f9;
+        background-image:
+            linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+            linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+    .media-img-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .media-actions-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        backdrop-filter: blur(2px);
+    }
+    .media-card:hover .media-actions-overlay { opacity: 1; }
+
+    .m-btn {
+        width: 80%;
+        padding: 8px;
+        border-radius: 4px;
+        border: none;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: 0.2s;
+    }
+    .m-btn-use { background: var(--accent); color: #0f172a; }
+    .m-btn-use:hover { background: var(--accent-hover); }
+    .m-btn-del { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
+    .m-btn-del:hover { background: #ef4444; color: #fff; }
+
+    .empty-msg {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 30px;
+        color: #94a3b8;
+        border: 2px dashed #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar { width: var(--sidebar-collapsed); }
+        .brand span, .nav-item span { display: none; }
+        .nav-item { justify-content: center; padding: 16px 0; }
+        .nav-item i { margin: 0; font-size: 20px; }
+        .topbar { padding: 0 16px; }
+        .vp-btn span { display: none; }
+    }
+    
+    /* COMMUNICATION TAB START */
+    .comm-view {
+        flex: 1;
+        display: flex;
+        background: #fff;
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+    }
+    .comm-sidebar {
+        width: 320px;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+    }
+    .comm-header {
+        height: var(--header-height);
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        font-weight: 700;
+        color: #0f172a;
+        background: #fff;
+    }
+    .comm-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+    .comm-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        overflow-y: auto;
+    }
+    .msg-group-title {
+        padding: 10px 20px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #f1f5f9;
+    }
+    .msg-item {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        cursor: pointer;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .msg-item:hover { background: #fff; }
+    .msg-item.active { background: #e0f2fe; border-left: 3px solid var(--accent); }
+    .msg-item.unread .msg-name { font-weight: 700; color: #0f172a; }
+    .msg-item.unread .msg-preview { font-weight: 600; color: #334155; }
+    .msg-item.unread::after {
+        content: ''; position: absolute; top: 20px; right: 20px;
+        width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+    }
+    .msg-name { font-size: 14px; color: #334155; margin-bottom: 4px; }
+    .msg-preview { font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-time { font-size: 11px; color: #94a3b8; margin-top: 6px; text-align: right; }
+    
+    .msg-detail { padding: 40px; max-width: 800px; margin: 0 auto; width: 100%; }
+    .msg-detail-header { margin-bottom: 30px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; }
+    .msg-detail-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .msg-meta { display: flex; gap: 20px; color: #64748b; font-size: 13px; margin-bottom: 20px; }
+    .msg-meta i { margin-right: 6px; color: var(--accent); }
+    .msg-body { font-size: 15px; line-height: 1.6; color: #334155; white-space: pre-wrap; }
+    .msg-actions { display: flex; gap: 10px; margin-top: 30px; }
+    
+    .empty-state {
+        height: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: #94a3b8; text-align: center;
+    }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    /* COMMUNICATION TAB END */
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand">
+        <i class="fas fa-layer-group" style="margin-right: 12px;"></i>
+        <span>OZE EDITOR</span>
+    </div>
+    <div class="nav-menu">
+        <div class="nav-item active" onclick="loadPage('../index.html', this)">
+            <i class="fas fa-home"></i> <span>Home Editor</span>
+        </div>
+        <div class="nav-item" onclick="loadPage('../portfolio.html', this)">
+            <i class="fas fa-camera"></i> <span>Portfolio Editor</span>
+        </div>
+        <!-- COMMUNICATION TAB START -->
+        <div class="nav-item" onclick="openCommunication(this)">
+            <i class="fas fa-envelope"></i> <span>Communication</span>
+        </div>
+        <!-- COMMUNICATION TAB END -->
+        <div class="nav-item" onclick="openMediaLibrary()">
+            <i class="fas fa-images"></i> <span>Media Library</span>
+        </div>
+        <div class="nav-item" onclick="toggleTheme()">
+            <i class="fas fa-adjust"></i> <span>Appearance</span>
+        </div>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="viewport-controls">
+            <button class="vp-btn active" onclick="setViewport('desktop')" title="Desktop"><i class="fas fa-desktop"></i></button>
+            <button class="vp-btn" onclick="setViewport('tablet')" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
+            <button class="vp-btn" onclick="setViewport('mobile')" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
+        </div>
+        <div class="actions">
+            <button class="btn" onclick="resetChanges()"><i class="fas fa-undo"></i> Reset</button>
+            <button class="btn btn-primary" onclick="publish()"><i class="fas fa-cloud-upload-alt"></i> Publish</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="iframe-wrapper" id="iframeWrapper" style="width: 100%; height: 100%;">
+            <div id="fallbackMessage" style="display:none; height:100%; flex-direction:column; align-items:center; justify-content:center; color:var(--text-muted); text-align:center; padding:20px;">
+                <i class="fas fa-exclamation-triangle" style="font-size:48px; margin-bottom:16px; color:var(--danger);"></i>
+                <h3 style="color:var(--text-main);">Page Not Found</h3>
+                <p id="fallbackText">Could not load the page. Please ensure the file exists in the parent folder.</p>
+            </div>
+            <iframe id="editorFrame" src="../index.html"></iframe>
+        </div>
+    </div>
+
+    <!-- COMMUNICATION TAB START -->
+    <div id="communicationView" class="comm-view" style="display: none;">
+        <div class="comm-sidebar">
+            <div class="comm-header">
+                <span>Inbox</span>
+                <span style="font-size:12px; color:#94a3b8;" id="msgCount">0 Messages</span>
+            </div>
+            <div class="comm-list" id="commList">
+                <!-- Messages Injected Here -->
+            </div>
+        </div>
+        <div class="comm-content" id="commContent">
+            <div class="empty-state">
+                <i class="fas fa-envelope-open-text"></i>
+                <p>Select a message to read</p>
+            </div>
+        </div>
+    </div>
+    <!-- COMMUNICATION TAB END -->
+</main>
+
+<!-- LINK EDITOR MODAL -->
+<div class="modal-overlay" id="linkModal">
+    <div class="modal">
+        <h3>Edit Link / Button</h3>
+        <div class="form-group">
+            <label>Button Label / Text</label>
+            <input type="text" id="linkText" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Destination URL</label>
+            <input type="text" id="linkHref" class="form-control">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeModal('linkModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveLinkEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- PROFESSIONAL MEDIA MANAGER MODAL -->
+<div class="modal-overlay" id="mediaModal">
+    <div class="modal">
+        <div class="media-manager">
+            <!-- Header -->
+            <div class="media-header">
+                <div class="media-title">
+                    <i class="fas fa-images" style="color:var(--accent)"></i> Media Manager
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <label class="media-upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload New
+                        <input type="file" accept="image/*" onchange="addImage(this)">
+                    </label>
+                    <button class="media-close" onclick="closeModal('mediaModal')">&times;</button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="media-scroll-area">
+               
+                <!-- Section 1: Recently Used -->
+                <div class="media-section">
+                    <div class="media-section-head">
+                        <i class="fas fa-history"></i> Recently Used
+                    </div>
+                    <div class="media-grid" id="mediaGridRecent">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Section 2: All Media --><!-- Section 2: All Media -->
+                <div class="media-section">
+                    <div class="media-section-head">
+                        <i class="fas fa-database"></i> All Media Library
+                    </div>
+                    <div class="media-grid" id="mediaGridAll">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- External URL Fallback -->
+                <div class="media-section" style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:20px;">
+                    <div class="form-group">
+                        <label style="color:#64748b;">Or use External URL</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="imgUrlInput" class="form-control" placeholder="https://example.com/image.jpg" style="background:#fff; border-color:#e2e8f0; color:#0f172a;">
+                            <button class="btn btn-primary" onclick="saveImageEdit()">Use</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i> Changes Published Successfully!
+</div>
+
+<!-- FIX: Hidden inputs required by publish() -->
+<input type="hidden" id="titleInput" value="Page Update">
+<input type="hidden" id="contentInput" value="Content Update">
+
+<script>
+// ================= SUPABASE CONNECTION =================
+const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
+console.log("Supabase connected:", SUPABASE_URL);
+
+// --- DATA MODEL & STATE ---
+const state = {
+    currentPage: '../index.html',
+    patches: JSON.parse(localStorage.getItem('oze_patches')) || {},
+    // New Media Library Structure
+    mediaLibrary: { images: [] },
+    editingSelector: null,
+    selectedElement: null,
+    theme: 'dark'
+};
+
+// FIX: Expose currentPage globally so publish() can find it
+Object.defineProperty(window, 'currentPage', { get: () => state.currentPage });
+
+const frame = document.getElementById('editorFrame');
+const wrapper = document.getElementById('iframeWrapper');
+const fallbackMsg = document.getElementById('fallbackMessage');
+const fallbackText = document.getElementById('fallbackText');
+
+// --- INITIALIZATION ---
+window.addEventListener('DOMContentLoaded', () => {
+    initMediaLibrary();
+    loadPage('../index.html', document.querySelector('.nav-item'));
+    if(localStorage.getItem('oze_theme') === 'light') toggleTheme();
+});
+
+function initMediaLibrary() {
+    const storedMedia = localStorage.getItem('ozeMedia');
+    if (storedMedia) {
+        state.mediaLibrary = JSON.parse(storedMedia);
+    } else {
+        // Migration: Check for old array format and convert
+        const oldMedia = localStorage.getItem('oze_media');
+        if (oldMedia) {
+            try {
+                const parsed = JSON.parse(oldMedia);
+                if (Array.isArray(parsed)) {
+                    state.mediaLibrary.images = parsed.map((src, i) => ({
+                        id: 'legacy_' + i + '_' + Date.now(),
+                        src: src,
+                        name: 'Imported Image',
+                        createdAt: Date.now(),
+                        lastUsed: null
+                    }));
+                    localStorage.setItem('ozeMedia', JSON.stringify(state.mediaLibrary));
+                }
+            } catch(e) { console.error("Migration failed", e); }
+        }
+    }
+}
+
+function loadPage(url, navEl) {
+    state.currentPage = url;
+    frame.style.display = 'none';
+    fallbackMsg.style.display = 'none';
+   
+    const fileName = url.split('/').pop();
+    fallbackText.innerHTML = `Could not load <b>${fileName}</b>.<br>Please ensure it exists in the parent folder.`;
+
+    frame.src = url;
+   
+    if(navEl) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        navEl.classList.add('active');
+    }
+}
+
+function setViewport(mode) {
+    document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    wrapper.className = 'iframe-wrapper ' + mode;
+}
+
+// --- PORTFOLIO EDITOR LOGIC ---
+frame.onload = () => {
+    frame.style.display = 'block';
+    if (state.currentPage.includes('portfolio.html')) {
+        renderPortfolioEditor();
+    }
+};
+
+function renderPortfolioEditor() {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+
+    // 1. Inject CMS Styles into Iframe
+    const style = doc.createElement('style');
+    style.textContent = `
+        .cms-overlay {
+            position: absolute; top: 10px; right: 10px; z-index: 100;
+            display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s;
+        }
+        .card:hover .cms-overlay { opacity: 1; }
+        .cms-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: white; border: 1px solid #ddd;
+            color: #333; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 16px;
+        }
+        .cms-btn:hover { background: #f8fafc; color: #0ea5e9; }
+        
+        .cms-menu {
+            position: absolute; top: 40px; right: 0;
+            background: white; border: 1px solid #e2e8f0;
+            border-radius: 8px; width: 180px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            display: none; flex-direction: column;
+            overflow: hidden; z-index: 101;
+        }
+        .cms-menu.active { display: flex; }
+        .cms-item {
+            padding: 10px 14px; font-size: 13px;
+            color: #333; cursor: pointer; text-align: left;
+            background: none; border: none; width: 100%;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .cms-item:hover { background: #f1f5f9; }
+        .cms-item.danger { color: #ef4444; border-top: 1px solid #f1f5f9; }
+        
+        .folder-header {
+            grid-column: 1 / -1;
+            padding: 20px 0 10px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 20px; margin-top: 20px;
+            font-family: 'Playfair Display', serif;
+            font-size: 24px; color: #fff;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card { position: relative !important; }
+    `;
+    doc.head.appendChild(style);
+
+    // 2. Wire up Cards
+    const cards = doc.querySelectorAll('.card');
+    cards.forEach(card => setupCard(card, doc));
+}
+
+function setupCard(card, doc) {
+    // Prevent existing click behavior (fullscreen)
+    card.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }, true);
+
+    // Check if controls exist
+    if (card.querySelector('.cms-overlay')) return;
+
+    // FIX: Disable duplicate menu (Global Context Menu handles this)
+    return;
+
+    // Create Controls
+    const overlay = doc.createElement('div');
+    overlay.className = 'cms-overlay';
+    
+    const menuBtn = doc.createElement('button');
+    menuBtn.className = 'cms-btn';
+    menuBtn.innerHTML = '⋮';
+    menuBtn.title = 'Image Options';
+    
+    const menu = doc.createElement('div');
+    menu.className = 'cms-menu';
+    menu.innerHTML = `
+        <button class="cms-item" data-action="replace"><i class="fas fa-sync-alt"></i> Replace Image</button>
+        <button class="cms-item" data-action="caption"><i class="fas fa-font"></i> Edit Caption</button>
+        <button class="cms-item" data-action="add"><i class="fas fa-plus"></i> Add Image After</button>
+        <button class="cms-item" data-action="folder"><i class="fas fa-folder-plus"></i> Create Folder</button>
+        <button class="cms-item danger" data-action="delete"><i class="fas fa-trash"></i> Delete Image</button>
+    `;
+
+    // Toggle Menu
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other menus
+        doc.querySelectorAll('.cms-menu.active').forEach(m => {
+            if(m !== menu) m.classList.remove('active');
+        });
+        menu.classList.toggle('active');
+    });
+
+    // Handle Actions
+    menu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const btn = e.target.closest('.cms-item');
+        if (!btn) return;
+        
+        const action = btn.dataset.action;
+        menu.classList.remove('active');
+        handlePortfolioAction(action, card, doc);
+    });
+
+    // Close on outside click
+    doc.addEventListener('click', () => menu.classList.remove('active'));
+
+    overlay.appendChild(menuBtn);
+    overlay.appendChild(menu);
+    card.appendChild(overlay);
+}
+
+function handlePortfolioAction(action, card, doc) {
+    const img = card.querySelector('img');
+    const title = card.querySelector('.title');
+
+    switch(action) {
+        case 'replace':
+            openMediaLibrary((url) => {
+                img.src = url;
+                showToast('Image replaced');
+            });
+            break;
+            
+        case 'caption':
+            const newText = prompt("Edit Caption:", title ? title.innerText : "");
+            if (newText !== null) {
+                if (title) title.innerText = newText;
+                else {
+                    const t = doc.createElement('div');
+                    t.className = 'title';
+                    t.innerText = newText;
+                    card.appendChild(t);
+                }
+            }
+            break;
+            
+        case 'add':
+            openMediaLibrary((url) => {
+                const newCard = card.cloneNode(true);
+                newCard.querySelector('img').src = url;
+                const t = newCard.querySelector('.title');
+                if(t) t.innerText = "New Image";
+                
+                // Remove old overlay to re-bind events fresh
+                const oldOverlay = newCard.querySelector('.cms-overlay');
+                if(oldOverlay) oldOverlay.remove();
+                
+                card.parentNode.insertBefore(newCard, card.nextSibling);
+                setupCard(newCard, doc);
+                showToast('Image added');
+            });
+            break;
+            
+        case 'folder':
+            const folderName = prompt("Enter Folder Name (e.g. Wedding):");
+            if (folderName) {
+                const header = doc.createElement('div');
+                header.className = 'folder-header';
+                header.innerText = folderName;
+                // Insert before the current card
+                card.parentNode.insertBefore(header, card);
+                showToast('Folder created');
+            }
+            break;
+            
+        case 'delete':
+            if(confirm("Are you sure you want to delete this image?")) {
+                card.remove();
+                showToast('Image deleted');
+            }
+            break;
+    }
+}
+
+// --- MEDIA LIBRARY LOGIC ---
+function openMediaLibrary(callback = null) {
+    state.mediaPickerCallback = callback;
+    document.getElementById('mediaModal').classList.add('active');
+    renderMediaGrid();
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    if (id === 'mediaModal') state.mediaPickerCallback = null;
+}
+
+function addImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const newImg = {
+                id: 'img_' + Date.now(),
+                src: e.target.result,
+                name: input.files[0].name,
+                createdAt: Date.now(),
+                lastUsed: Date.now()
+            };
+            state.mediaLibrary.images.unshift(newImg);
+            localStorage.setItem('ozeMedia', JSON.stringify(state.mediaLibrary));
+            renderMediaGrid();
+            
+            // Auto-select if in picker mode
+            if (state.mediaPickerCallback) {
+                state.mediaPickerCallback(newImg.src);
+                closeModal('mediaModal');
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function renderMediaGrid() {
+    const gridAll = document.getElementById('mediaGridAll');
+    const gridRecent = document.getElementById('mediaGridRecent');
+    gridAll.innerHTML = '';
+    gridRecent.innerHTML = '';
+
+    state.mediaLibrary.images.forEach(img => {
+        const card = document.createElement('div');
+        card.className = 'media-card';
+        card.innerHTML = `
+            <div class="media-img-wrap"><img src="${img.src}"></div>
+            <div class="media-actions-overlay">
+                <button class="m-btn m-btn-use" onclick="selectMedia('${img.id}')">
+                    <i class="fas fa-check"></i> ${state.mediaPickerCallback ? 'Select' : 'Use'}
+                </button>
+                <button class="m-btn m-btn-del" onclick="deleteMedia('${img.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        gridAll.appendChild(card);
+        
+        // Add to recent if used recently (mock logic: just first 4)
+        if (gridRecent.children.length < 4) {
+            gridRecent.appendChild(card.cloneNode(true));
+        }
+    });
+
+    if (state.mediaLibrary.images.length === 0) {
+        gridAll.innerHTML = '<div class="empty-msg">No images found. Upload one!</div>';
+    }
+}
+
+function selectMedia(id) {
+    const img = state.mediaLibrary.images.find(i => i.id === id);
+    if (!img) return;
+
+    if (state.mediaPickerCallback) {
+        state.mediaPickerCallback(img.src);
+        closeModal('mediaModal');
+    } else {
+        // Fallback: Copy URL
+        navigator.clipboard.writeText(img.src);
+        showToast("URL Copied to Clipboard");
+    }
+}
+
+function deleteMedia(id) {
+    if(!confirm("Delete this image from library?")) return;
+    state.mediaLibrary.images = state.mediaLibrary.images.filter(i => i.id !== id);
+    localStorage.setItem('ozeMedia', JSON.stringify(state.mediaLibrary));
+    renderMediaGrid();
+}
+
+function saveImageEdit() {
+    const url = document.getElementById('imgUrlInput').value;
+    if (url && state.mediaPickerCallback) {
+        state.mediaPickerCallback(url);
+        closeModal('mediaModal');
+    }
+}
+
+// --- GENERAL UTILS ---
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function resetChanges() {
+    if(confirm("Discard all changes and reload?")) {
+        frame.contentWindow.location.reload();
+    }
+}
+
+async function publish() {
+  alert("Publish button clicked");
+  const page = currentPage; // example: home, portfolio
+  const title = document.querySelector("#titleInput").value;
+  const content = document.querySelector("#contentInput").value;
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/pages`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates"
+      },
+      body: JSON.stringify({
+        page,
+        title,
+        content,
+        updated_at: new Date()
+      })
+    });
+
+    alert("✅ Published successfully");
+    const liveUrl = new URL('../index.html', window.location.href).href;
+    alert(`🚀 All Set!
+Your website has been updated and is now live.
+
+👀 View it here:
+${liveUrl}`);
+  } catch (error) {
+    alert("❌ Publish failed. Check connection or permissions.");
+    console.error(error);
+  }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    state.theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    localStorage.setItem('oze_theme', state.theme);
+}
+</script>
+
+<!-- COMMUNICATION TAB START -->
+<script>
+(function() {
+    // --- COMMUNICATION LOGIC ---
+    const commView = document.getElementById('communicationView');
+    const topbar = document.querySelector('.topbar');
+    const workspace = document.querySelector('.workspace');
+    const commList = document.getElementById('commList');
+    const commContent = document.getElementById('commContent');
+    const msgCount = document.getElementById('msgCount');
+    
+    let messages = [];
+
+    window.openCommunication = async function(navEl) {
+        // Toggle UI
+        topbar.style.display = 'none';
+        workspace.style.display = 'none';
+        commView.style.display = 'flex';
+        
+        // Update Nav
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(navEl) navEl.classList.add('active');
+        
+        await fetchMessages();
+    };
+
+    async function fetchMessages() {
+        commList.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">Loading...</div>';
+        const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+        if (error) {
+            console.error(error);
+            commList.innerHTML = '<div style="padding:20px; text-align:center; color:#ef4444;">Failed to load messages.</div>';
+            return;
+        }
+        messages = data || [];
+        renderInbox();
+    }
+
+    // Hook into existing loadPage to hide communication view
+    const originalLoadPage = window.loadPage;
+    window.loadPage = function(url, navEl) {
+        topbar.style.display = 'flex';
+        workspace.style.display = 'flex';
+        commView.style.display = 'none';
+        originalLoadPage(url, navEl);
+    };
+
+    function renderInbox() {
+        commList.innerHTML = '';
+        msgCount.innerText = `${messages.length} Messages`;
+
+        const groups = { 'Today': [], 'Yesterday': [], 'Earlier': [] };
+        
+        messages.forEach(msg => {
+            const d = new Date(msg.created_at);
+            const today = new Date();
+            const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            const isYesterday = d.getDate() === today.getDate() - 1 && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            
+            if (isToday) groups['Today'].push(msg);
+            else if (isYesterday) groups['Yesterday'].push(msg);
+            else groups['Earlier'].push(msg);
+        });
+
+        for (const [label, msgs] of Object.entries(groups)) {
+            if (msgs.length === 0) continue;
+            
+            const groupTitle = document.createElement('div');
+            groupTitle.className = 'msg-group-title';
+            groupTitle.innerText = label;
+            commList.appendChild(groupTitle);
+
+            msgs.forEach(msg => {
+                const el = document.createElement('div');
+                el.className = `msg-item ${msg.read ? '' : 'unread'}`;
+                el.onclick = () => openMessage(msg.id, el);
+                el.innerHTML = `
+                    <div class="msg-name">${msg.name}</div>
+                    <div class="msg-preview">${msg.message}</div>
+                    <div class="msg-time">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                `;
+                commList.appendChild(el);
+            });
+        }
+        
+        if (messages.length === 0) {
+            commList.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">No messages found.</div>';
+        }
+    }
+
+    window.openMessage = async function(id, el) {
+        document.querySelectorAll('.msg-item').forEach(e => e.classList.remove('active'));
+        if(el) {
+            el.classList.add('active');
+            el.classList.remove('unread');
+        }
+
+        const msg = messages.find(m => m.id === id);
+        if (!msg) return;
+
+        // Mark read
+        if (!msg.read) {
+            msg.read = true;
+            await supabase.from('messages').update({ read: true }).eq('id', id);
+        }
+
+        commContent.innerHTML = `
+            <div class="msg-detail">
+                <div class="msg-detail-header">
+                    <div class="msg-detail-title">${msg.name}</div>
+                    <div class="msg-meta">
+                        <span><i class="fas fa-envelope"></i> ${msg.email}</span>
+                        <span><i class="fas fa-phone"></i> ${msg.phone}</span>
+                        <span><i class="fas fa-clock"></i> ${new Date(msg.created_at).toLocaleString()}</span>
+                    </div>
+                </div>
+                <div class="msg-body">${msg.message}</div>
+                <div class="msg-actions">
+                    <a href="mailto:${msg.email}" class="btn btn-primary"><i class="fas fa-reply"></i> Reply</a>
+                    <a href="tel:${msg.phone}" class="btn"><i class="fas fa-phone"></i> Call</a>
+                    <button class="btn" style="color:var(--danger); border-color:var(--danger);" onclick="deleteMessage(${msg.id})"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    };
+
+    window.deleteMessage = async function(id) {
+        if(!confirm("Permanently delete this message?")) return;
+        
+        const { error } = await supabase.from('messages').delete().eq('id', id);
+        if (error) { alert("Error deleting"); return; }
+
+        messages = messages.filter(m => m.id !== id);
+        renderInbox();
+        commContent.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-trash"></i>
+                <p>Message deleted.</p>
+            </div>
+        `;
+    };
+})();
+</script>
+<!-- COMMUNICATION TAB END -->
+
+<!-- CONTEXT MENU SYSTEM START -->
+<script>
+(function() {
+    const frame = document.getElementById('editorFrame');
+
+    function initContextSystem() {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+
+        // 0. INJECT FONT AWESOME IF MISSING
+        if (!doc.querySelector('link[href*="font-awesome"]')) {
+            const fa = doc.createElement('link');
+            fa.rel = 'stylesheet';
+            fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+            doc.head.appendChild(fa);
+        }
+
+        // 1. INJECT STYLES
+        if (!doc.getElementById('oze-ctx-styles')) {
+            const style = doc.createElement('style');
+            style.id = 'oze-ctx-styles';
+            style.textContent = `
+                .oze-highlight { outline: 2px solid #38bdf8 !important; cursor: default; }
+                .oze-ctx-btn {
+                    position: absolute; width: 28px; height: 28px;
+                    background: #38bdf8; color: #fff; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer;
+                    z-index: 9999; font-size: 14px; border: 2px solid #fff;
+                    transition: transform 0.2s; pointer-events: auto;
+                }
+                .oze-ctx-btn:hover { transform: scale(1.1); background: #0ea5e9; }
+                .oze-ctx-menu {
+                    position: absolute; background: #fff; border: 1px solid #e2e8f0;
+                    border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+                    display: none; flex-direction: column; min-width: 160px;
+                    z-index: 10000; overflow: hidden; animation: ozeFadeIn 0.15s ease;
+                }
+                .oze-ctx-menu.active { display: flex; }
+                .oze-ctx-item {
+                    padding: 10px 16px; font-size: 13px; color: #334155;
+                    background: none; border: none; text-align: left;
+                    cursor: pointer; display: flex; align-items: center; gap: 10px;
+                    font-family: 'Inter', sans-serif; font-weight: 500;
+                    transition: background 0.1s;
+                }
+                .oze-ctx-item:hover { background: #f1f5f9; color: #0ea5e9; }
+                .oze-ctx-item.danger { color: #ef4444; border-top: 1px solid #f1f5f9; }
+                .oze-ctx-item.danger:hover { background: #fef2f2; }
+                
+                /* Dragging Visuals */
+                .oze-move-active { cursor: move !important; outline: 2px dashed #38bdf8 !important; opacity: 0.8; }
+                .oze-drop-target { border-right: 4px solid #38bdf8 !important; }
+                
+                @keyframes ozeFadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+            `;
+            doc.head.appendChild(style);
+        }
+
+        // 2. CREATE OVERLAY ELEMENTS (Singleton)
+        let ctxBtn = doc.getElementById('oze-ctx-btn');
+        let ctxMenu = doc.getElementById('oze-ctx-menu');
+
+        if (!ctxBtn) {
+            ctxBtn = doc.createElement('div');
+            ctxBtn.id = 'oze-ctx-btn';
+            ctxBtn.className = 'oze-ctx-btn';
+            ctxBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>';
+            ctxBtn.style.display = 'none';
+            doc.body.appendChild(ctxBtn);
+
+            ctxMenu = doc.createElement('div');
+            ctxMenu.id = 'oze-ctx-menu';
+            ctxMenu.className = 'oze-ctx-menu';
+            doc.body.appendChild(ctxMenu);
+        }
+
+        // STATE
+        let currentTarget = null;
+        let isMenuOpen = false;
+        let moveMode = false;
+
+        // 3. EVENT DELEGATION (Hover)
+        doc.body.addEventListener('mouseover', (e) => {
+            if (isMenuOpen || moveMode) return;
+            const target = e.target.closest('img, h1, h2, h3, p, span, a, button, .service-item');
+            
+            // Filter out UI elements
+            if (!target || target.closest('.oze-ctx-menu') || target === ctxBtn) return;
+            if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
+
+            currentTarget = target;
+            positionBtn(target);
+        });
+
+        // Hide button when leaving target (debounced)
+        let leaveTimer;
+        doc.body.addEventListener('mouseout', (e) => {
+            if (isMenuOpen || moveMode) return;
+            // If moving to the button, don't hide
+            if (e.relatedTarget === ctxBtn || ctxBtn.contains(e.relatedTarget)) return;
+            
+            ctxBtn.style.display = 'none';
+        });
+
+        // Keep button visible when hovering it
+        ctxBtn.addEventListener('mouseover', () => {
+            clearTimeout(leaveTimer);
+            ctxBtn.style.display = 'flex';
+        });
+
+        function positionBtn(target) {
+            const rect = target.getBoundingClientRect();
+            const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
+            const scrollLeft = doc.documentElement.scrollLeft || doc.body.scrollLeft;
+            
+            ctxBtn.style.top = (rect.top + scrollTop - 10) + 'px';
+            ctxBtn.style.left = (rect.right + scrollLeft - 15) + 'px';
+            ctxBtn.style.display = 'flex';
+        }
+
+        // 4. MENU LOGIC
+        ctxBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            showMenu();
+        });
+
+        function showMenu() {
+            if (!currentTarget) return;
+            isMenuOpen = true;
+            
+            // Determine Type
+            const isImage = currentTarget.tagName === 'IMG';
+            
+            // Build Menu Items
+            let items = '';
+            
+            // Common: Move
+            items += `<button class="oze-ctx-item" data-action="move"><i class="fas fa-arrows-alt"></i> Move</button>`;
+            
+            if (isImage) {
+                items += `
+                    <button class="oze-ctx-item" data-action="replace"><i class="fas fa-sync-alt"></i> Replace</button>
+                    <button class="oze-ctx-item" data-action="add-img"><i class="fas fa-plus"></i> Add Image</button>
+                `;
+            } else {
+                items += `
+                    <button class="oze-ctx-item" data-action="edit"><i class="fas fa-pen"></i> Edit Text</button>
+                    <button class="oze-ctx-item" data-action="add-text"><i class="fas fa-plus"></i> Add Text Below</button>
+                `;
+            }
+            
+            items += `<button class="oze-ctx-item danger" data-action="delete"><i class="fas fa-trash"></i> Delete</button>`;
+            
+            ctxMenu.innerHTML = items;
+            
+            // Position Menu
+            const btnRect = ctxBtn.getBoundingClientRect();
+            const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
+            
+            ctxMenu.style.top = (btnRect.bottom + scrollTop + 5) + 'px';
+            ctxMenu.style.left = (btnRect.left - 130) + 'px'; // Align leftish
+            ctxMenu.classList.add('active');
+        }
+
+        // Close Menu
+        doc.addEventListener('click', (e) => {
+            if (!ctxMenu.contains(e.target) && e.target !== ctxBtn) {
+                closeMenu();
+            }
+        });
+        
+        function closeMenu() {
+            ctxMenu.classList.remove('active');
+            isMenuOpen = false;
+        }
+
+        // 5. ACTION HANDLERS
+        ctxMenu.addEventListener('click', (e) => {
+            const btn = e.target.closest('.oze-ctx-item');
+            if (!btn) return;
+            
+            const action = btn.dataset.action;
+            closeMenu();
+            ctxBtn.style.display = 'none';
+            
+            handleAction(action);
+        });
+
+        function handleAction(action) {
+            if (!currentTarget) return;
+
+            switch(action) {
+                case 'move':
+                    enableMoveMode();
+                    break;
+                case 'replace':
+                    // Use existing global function
+                    if (window.openMediaLibrary) {
+                        window.openMediaLibrary((url) => {
+                            currentTarget.src = url;
+                            saveState();
+                        });
+                    }
+                    break;
+                case 'add-img':
+                    if (window.openMediaLibrary) {
+                        window.openMediaLibrary((url) => {
+                            const newImg = currentTarget.cloneNode(true);
+                            newImg.src = url;
+                            currentTarget.parentNode.insertBefore(newImg, currentTarget.nextSibling);
+                            saveState();
+                        });
+                    }
+                    break;
+                case 'edit':
+                    enableTextEdit();
+                    break;
+                case 'add-text':
+                    const newText = currentTarget.cloneNode(true);
+                    newText.innerText = "New Text Block";
+                    currentTarget.parentNode.insertBefore(newText, currentTarget.nextSibling);
+                    saveState();
+                    break;
+                case 'delete':
+                    if (confirm('Delete this element?')) {
+                        currentTarget.remove();
+                        currentTarget = null;
+                        saveState();
+                    }
+                    break;
+            }
+        }
+
+        // 6. MOVE MODE (Drag & Drop)
+        function enableMoveMode() {
+            moveMode = true;
+            currentTarget.draggable = true;
+            currentTarget.classList.add('oze-move-active');
+            
+            const cleanup = () => {
+                moveMode = false;
+                if (currentTarget) {
+                    currentTarget.draggable = false;
+                    currentTarget.classList.remove('oze-move-active');
+                }
+                doc.removeEventListener('dragstart', onDragStart);
+                doc.removeEventListener('dragover', onDragOver);
+                doc.removeEventListener('drop', onDrop);
+                doc.removeEventListener('dragend', onDragEnd);
+                doc.removeEventListener('keydown', onEsc);
+            };
+
+            const onDragStart = (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', e.target.outerHTML);
+                e.target.style.opacity = '0.4';
+            };
+
+            const onDragOver = (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                // Highlight drop target logic could go here
+            };
+
+            const onDrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const dropTarget = e.target.closest('img, h1, h2, h3, p, div');
+                if (dropTarget && dropTarget !== currentTarget && dropTarget.parentNode === currentTarget.parentNode) {
+                    // Swap or Insert
+                    // Simple logic: Insert Before
+                    dropTarget.parentNode.insertBefore(currentTarget, dropTarget);
+                    saveState();
+                }
+            };
+
+            const onDragEnd = (e) => {
+                e.target.style.opacity = '1';
+                cleanup();
+            };
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') cleanup();
+            };
+
+            doc.addEventListener('dragstart', onDragStart);
+            doc.addEventListener('dragover', onDragOver);
+            doc.addEventListener('drop', onDrop);
+            doc.addEventListener('dragend', onDragEnd);
+            doc.addEventListener('keydown', onEsc);
+            
+            // Show toast in parent
+            const toast = document.getElementById('toast');
+            if(toast) {
+                toast.innerHTML = '<i class="fas fa-arrows-alt"></i> Drag element to move. ESC to cancel.';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+        
+        // Prevent accidental drags when not in move mode
+        doc.addEventListener('dragstart', (e) => {
+            if (!moveMode) e.preventDefault();
+        });
+
+        // 7. TEXT EDIT MODE
+        function enableTextEdit() {
+            currentTarget.contentEditable = true;
+            currentTarget.focus();
+            currentTarget.classList.add('oze-highlight');
+            
+            const onBlur = () => {
+                currentTarget.contentEditable = false;
+                currentTarget.classList.remove('oze-highlight');
+                currentTarget.removeEventListener('blur', onBlur);
+                saveState();
+            };
+            
+            currentTarget.addEventListener('blur', onBlur);
+        }
+
+        // 8. PERSISTENCE
+        function saveState() {
+            // Save to localStorage
+            // We save the whole body HTML for simplicity in this context
+            // In a real app, we'd sync specific data
+            localStorage.setItem('oze_autosave_content', doc.body.innerHTML);
+            console.log('Auto-saved to localStorage');
+        }
+    }
+
+    // Initialize on load and when frame reloads
+    frame.addEventListener('load', initContextSystem);
+    // If already loaded
+    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+        initContextSystem();
+    }
+
+})();
+</script>
+<!-- CONTEXT MENU SYSTEM END -->
+
+<!-- SETTINGS & SECURITY SYSTEM START -->
+<style>
+    /* --- SETTINGS VIEW --- */
+    .oze-settings-view {
+        flex: 1;
+        background: #f8fafc; /* Light bg for contrast with dark sidebar */
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        color: #0f172a;
+    }
+    body.light-theme .oze-settings-view { background: #ffffff; }
+
+    .oze-set-header {
+        padding: 0 40px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fff;
+    }
+    .oze-set-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
+    
+    .oze-set-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 40px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+        align-content: start;
+    }
+
+    .oze-set-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .oze-set-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    
+    .oze-set-head {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;
+    }
+    .oze-set-h-title { font-size: 16px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em; }
+    .oze-set-icon { color: #38bdf8; font-size: 18px; }
+
+    .oze-field-group { margin-bottom: 20px; }
+    .oze-label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+    .oze-input {
+        width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1;
+        border-radius: 6px; font-size: 14px; outline: none; transition: 0.2s;
+        background: #f8fafc; color: #0f172a;
+    }
+    .oze-input:focus { border-color: #38bdf8; background: #fff; }
+    
+    .oze-btn-action {
+        width: 100%; padding: 10px; border: none; border-radius: 6px;
+        font-weight: 600; cursor: pointer; transition: 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .oze-btn-blue { background: #38bdf8; color: #fff; }
+    .oze-btn-blue:hover { background: #0ea5e9; }
+    .oze-btn-red { background: #fee2e2; color: #ef4444; }
+    .oze-btn-red:hover { background: #fecaca; }
+    .oze-btn-dark { background: #1e293b; color: #fff; }
+    .oze-btn-dark:hover { background: #334155; }
+
+    /* Toggles */
+    .oze-toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .oze-toggle-label { font-size: 14px; color: #334155; font-weight: 500; }
+    .oze-switch {
+        position: relative; display: inline-block; width: 44px; height: 24px;
+    }
+    .oze-switch input { opacity: 0; width: 0; height: 0; }
+    .oze-slider {
+        position: absolute; cursor: pointer; inset: 0;
+        background-color: #cbd5e1; transition: .4s; border-radius: 24px;
+    }
+    .oze-slider:before {
+        position: absolute; content: ""; height: 18px; width: 18px;
+        left: 3px; bottom: 3px; background-color: white;
+        transition: .4s; border-radius: 50%;
+    }
+    input:checked + .oze-slider { background-color: #38bdf8; }
+    input:checked + .oze-slider:before { transform: translateX(20px); }
+
+    /* Audit Log */
+    .oze-audit-list {
+        max-height: 200px; overflow-y: auto;
+        background: #0f172a; border-radius: 8px; padding: 10px;
+        font-family: 'Courier New', monospace; font-size: 12px; color: #22c55e;
+    }
+    .oze-audit-item { margin-bottom: 4px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
+    .oze-audit-time { color: #94a3b8; margin-right: 8px; }
+
+    /* --- LOCK SCREEN OVERLAY --- */
+    .oze-lock-screen {
+        position: fixed; inset: 0; background: #0f172a; z-index: 99999;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; animation: ozeFadeIn 0.3s ease;
+    }
+    .oze-lock-screen.active { display: flex; }
+    .oze-lock-icon { font-size: 64px; color: #38bdf8; margin-bottom: 24px; animation: ozePulse 2s infinite; }
+    .oze-lock-title { font-size: 24px; font-weight: 700; margin-bottom: 32px; letter-spacing: 0.1em; }
+    .oze-lock-input {
+        background: rgba(255,255,255,0.1); border: 1px solid #334155;
+        padding: 14px 24px; border-radius: 30px; color: #fff; font-size: 16px;
+        text-align: center; width: 280px; outline: none; margin-bottom: 20px;
+        transition: 0.3s;
+    }
+    .oze-lock-input:focus { border-color: #38bdf8; background: rgba(255,255,255,0.15); }
+    .oze-lock-btn {
+        background: #38bdf8; color: #0f172a; border: none;
+        padding: 12px 40px; border-radius: 30px; font-weight: 700;
+        cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase;
+    }
+    .oze-lock-btn:hover { background: #0ea5e9; transform: scale(1.05); }
+
+    @keyframes ozePulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+</style>
+
+<script>
+(function() {
+    // --- 1. DOM INJECTION ---
+    
+    // Inject Nav Item
+    const navMenu = document.querySelector('.nav-menu');
+    const settingsNav = document.createElement('div');
+    settingsNav.className = 'nav-item';
+    settingsNav.innerHTML = '<i class="fas fa-shield-alt"></i> <span>Security & Settings</span>';
+    settingsNav.onclick = function() { openSettings(this); };
+    navMenu.appendChild(settingsNav);
+
+    // Inject Settings View
+    const main = document.querySelector('.main');
+    const settingsView = document.createElement('div');
+    settingsView.id = 'ozeSettingsView';
+    settingsView.className = 'oze-settings-view';
+    settingsView.innerHTML = `
+        <div class="oze-set-header">
+            <div class="oze-set-title">SETTINGS & SECURITY</div>
+        </div>
+        <div class="oze-set-container">
+            
+            <!-- SECURITY: ACCESS -->
+            <div class="oze-set-card">
+                <div class="oze-set-head">
+                    <div class="oze-set-h-title">Access Protection</div>
+                    <i class="fas fa-key oze-set-icon"></i>
+                </div>
+                <div class="oze-field-group">
+                    <label class="oze-label">New Password</label>
+                    <input type="password" id="ozeNewPass" class="oze-input" placeholder="Enter new password">
+                </div>
+                <div class="oze-field-group">
+                    <label class="oze-label">Confirm Password</label>
+                    <input type="password" id="ozeConfirmPass" class="oze-input" placeholder="Confirm new password">
+                </div>
+                <button class="oze-btn-action oze-btn-blue" onclick="ozeSecurity.setPassword()">
+                    <i class="fas fa-save"></i> Update Security
+                </button>
+            </div>
+
+            <!-- SECURITY: LOCK & SESSION -->
+            <div class="oze-set-card">
+                <div class="oze-set-head">
+                    <div class="oze-set-h-title">Session Control</div>
+                    <i class="fas fa-hourglass-half oze-set-icon"></i>
+                </div>
+                <div class="oze-field-group">
+                    <label class="oze-label">Auto-Lock Timer (Minutes)</label>
+                    <input type="number" id="ozeTimeout" class="oze-input" value="15" min="1" max="60" onchange="ozeSecurity.updateConfig('timeout', this.value)">
+                </div>
+                <div class="oze-toggle-row">
+                    <span class="oze-toggle-label">Visibility Lock (Tab Hidden)</span>
+                    <label class="oze-switch">
+                        <input type="checkbox" id="ozeVisLock" onchange="ozeSecurity.updateConfig('visLock', this.checked)">
+                        <span class="oze-slider"></span>
+                    </label>
+                </div>
+                <button class="oze-btn-action oze-btn-dark" onclick="ozeSecurity.lock()">
+                    <i class="fas fa-lock"></i> Lock Dashboard Now
+                </button>
+            </div>
+
+            <!-- PRIVACY SHIELD -->
+            <div class="oze-set-card">
+                <div class="oze-set-head">
+                    <div class="oze-set-h-title">Privacy Shield</div>
+                    <i class="fas fa-user-secret oze-set-icon"></i>
+                </div>
+                <div class="oze-toggle-row">
+                    <span class="oze-toggle-label">Disable Right-Click</span>
+                    <label class="oze-switch">
+                        <input type="checkbox" id="ozeNoRightClick" onchange="ozeSecurity.updateConfig('noRightClick', this.checked)">
+                        <span class="oze-slider"></span>
+                    </label>
+                </div>
+                <div class="oze-toggle-row">
+                    <span class="oze-toggle-label">Disable Text Selection</span>
+                    <label class="oze-switch">
+                        <input type="checkbox" id="ozeNoSelect" onchange="ozeSecurity.updateConfig('noSelect', this.checked)">
+                        <span class="oze-slider"></span>
+                    </label>
+                </div>
+                <div class="oze-toggle-row">
+                    <span class="oze-toggle-label">Integrity Mode (Strict)</span>
+                    <label class="oze-switch">
+                        <input type="checkbox" id="ozeIntegrity" onchange="ozeSecurity.updateConfig('integrity', this.checked)">
+                        <span class="oze-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- AUDIT LOG -->
+            <div class="oze-set-card" style="grid-column: 1 / -1;">
+                <div class="oze-set-head">
+                    <div class="oze-set-h-title">Security Audit Log</div>
+                    <i class="fas fa-list-alt oze-set-icon"></i>
+                </div>
+                <div class="oze-audit-list" id="ozeAuditLog">
+                    <!-- Logs -->
+                </div>
+                <div style="margin-top:15px; display:flex; justify-content:flex-end;">
+                    <button class="oze-btn-action oze-btn-red" style="width:auto; padding:8px 16px;" onclick="ozeSecurity.emergencyReset()">
+                        <i class="fas fa-exclamation-triangle"></i> Emergency Reset
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    `;
+    main.appendChild(settingsView);
+
+    // Inject Lock Screen
+    const lockScreen = document.createElement('div');
+    lockScreen.id = 'ozeLockScreen';
+    lockScreen.className = 'oze-lock-screen';
+    lockScreen.innerHTML = `
+        <i class="fas fa-fingerprint oze-lock-icon"></i>
+        <div class="oze-lock-title">DASHBOARD LOCKED</div>
+        <input type="password" id="ozeUnlockPass" class="oze-lock-input" placeholder="Enter Password">
+        <button class="oze-lock-btn" onclick="ozeSecurity.unlock()">Unlock Access</button>
+    `;
+    document.body.appendChild(lockScreen);
+
+    // --- 2. CORE SECURITY LOGIC ---
+    
+    const CONFIG_KEY = 'oze_sec_config';
+    const LOG_KEY = 'oze_sec_logs';
+
+    window.ozeSecurity = {
+        config: {
+            hash: null, // SHA-256 hash
+            timeout: 15,
+            visLock: false,
+            noRightClick: false,
+            noSelect: false,
+            integrity: false
+        },
+        
+        init: function() {
+            // Load Config
+            const stored = localStorage.getItem(CONFIG_KEY);
+            if(stored) this.config = JSON.parse(stored);
+            
+            // Sync UI
+            document.getElementById('ozeTimeout').value = this.config.timeout;
+            document.getElementById('ozeVisLock').checked = this.config.visLock;
+            document.getElementById('ozeNoRightClick').checked = this.config.noRightClick;
+            document.getElementById('ozeNoSelect').checked = this.config.noSelect;
+            document.getElementById('ozeIntegrity').checked = this.config.integrity;
+
+            // Render Logs
+            this.renderLogs();
+
+            // Setup Listeners
+            this.setupSessionMonitors();
+            this.setupTamperDetect();
+            
+            // Initial Lock Check
+            if(this.config.hash && sessionStorage.getItem('oze_unlocked') !== 'true') {
+                this.lock(true);
+            }
+            
+            // Apply Privacy Shield to Editor
+            this.applyShield();
+
+            // Enter key for unlock
+            document.getElementById('ozeUnlockPass').addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') this.unlock();
+            });
+        },
+
+        // Crypto
+        hash: async function(str) {
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        },
+
+        setPassword: async function() {
+            const p1 = document.getElementById('ozeNewPass').value;
+            const p2 = document.getElementById('ozeConfirmPass').value;
+            
+            if(!p1) return alert("Password cannot be empty");
+            if(p1 !== p2) return alert("Passwords do not match");
+            
+            const h = await this.hash(p1);
+            this.config.hash = h;
+            this.saveConfig();
+            this.log('Password updated');
+            
+            document.getElementById('ozeNewPass').value = '';
+            document.getElementById('ozeConfirmPass').value = '';
+            alert("Security Updated. Please remember your password.");
+        },
+
+        updateConfig: function(key, val) {
+            this.config[key] = val;
+            this.saveConfig();
+            this.log(`Config updated: ${key}`);
+            if(key === 'noRightClick' || key === 'noSelect' || key === 'integrity') this.applyShield();
+        },
+
+        saveConfig: function() {
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(this.config));
+        },
+
+        // Locking
+        lock: function(skipLog) {
+            if(!this.config.hash) {
+                if(!skipLog) alert("Please set a password first in Settings.");
+                return;
+            }
+            document.getElementById('ozeLockScreen').classList.add('active');
+            sessionStorage.setItem('oze_unlocked', 'false');
+            if(!skipLog) this.log('Dashboard Locked');
+        },
+
+        unlock: async function() {
+            const input = document.getElementById('ozeUnlockPass');
+            const attempt = input.value;
+            const h = await this.hash(attempt);
+            
+            if(h === this.config.hash) {
+                document.getElementById('ozeLockScreen').classList.remove('active');
+                sessionStorage.setItem('oze_unlocked', 'true');
+                input.value = '';
+                this.resetTimer();
+                this.log('Dashboard Unlocked');
+            } else {
+                input.classList.add('oze-shake'); // CSS anim could be added
+                setTimeout(() => input.classList.remove('oze-shake'), 500);
+                this.log('Failed unlock attempt');
+                alert("Incorrect Password");
+            }
+        },
+
+        // Session
+        timer: null,
+        resetTimer: function() {
+            clearTimeout(this.timer);
+            if(this.config.hash) {
+                this.timer = setTimeout(() => this.lock(), this.config.timeout * 60 * 1000);
+            }
+        },
+        
+        setupSessionMonitors: function() {
+            ['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, () => this.resetTimer());
+            });
+            
+            // Visibility Intelligence
+            document.addEventListener('visibilitychange', () => {
+                if(document.hidden && this.config.visLock) {
+                    this.lock();
+                }
+            });
+        },
+
+        // Privacy Shield Application
+        applyShield: function() {
+            const frame = document.getElementById('editorFrame');
+            if(!frame || !frame.contentDocument) return;
+            const doc = frame.contentDocument;
+            
+            // Right Click
+            if(this.config.noRightClick) {
+                doc.body.setAttribute('oncontextmenu', 'return false');
+            } else {
+                doc.body.removeAttribute('oncontextmenu');
+            }
+            
+            // Selection
+            if(this.config.noSelect) {
+                doc.body.style.userSelect = 'none';
+            } else {
+                doc.body.style.userSelect = 'auto';
+            }
+
+            // Integrity Mode
+            if(this.config.integrity) {
+                // Disable context menu button from previous feature
+                const style = doc.createElement('style');
+                style.id = 'oze-integrity-style';
+                style.textContent = '.oze-ctx-btn { display: none !important; }';
+                if(!doc.getElementById('oze-integrity-style')) doc.head.appendChild(style);
+            } else {
+                const s = doc.getElementById('oze-integrity-style');
+                if(s) s.remove();
+            }
+        },
+
+        // Tamper Detection (Heuristic)
+        setupTamperDetect: function() {
+            window.addEventListener('resize', () => {
+                const threshold = 200;
+                if(window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+                    // DevTools likely open
+                    if(this.config.integrity) {
+                        this.lock();
+                        this.log('Tamper detected (DevTools)');
+                    }
+                }
+            });
+        },
+
+        // Logging
+        log: function(msg) {
+            const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+            logs.unshift({ time: new Date().toLocaleString(), msg: msg });
+            if(logs.length > 50) logs.pop();
+            localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+            this.renderLogs();
+        },
+
+        renderLogs: function() {
+            const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+            const container = document.getElementById('ozeAuditLog');
+            if(container) {
+                container.innerHTML = logs.map(l => 
+                    `<div class="oze-audit-item"><span class="oze-audit-time">[${l.time}]</span> ${l.msg}</div>`
+                ).join('');
+            }
+        },
+
+        emergencyReset: function() {
+            if(confirm("WARNING: This will reset all security settings and passwords. Continue?") && 
+               confirm("Are you absolutely sure? This cannot be undone.")) {
+                localStorage.removeItem(CONFIG_KEY);
+                localStorage.removeItem(LOG_KEY);
+                location.reload();
+            }
+        }
+    };
+
+    // --- 3. NAVIGATION HOOKS ---
+    
+    window.openSettings = function(navEl) {
+        // Hide others
+        document.querySelector('.topbar').style.display = 'none';
+        document.querySelector('.workspace').style.display = 'none';
+        document.getElementById('communicationView').style.display = 'none';
+        
+        // Show Settings
+        document.getElementById('ozeSettingsView').style.display = 'flex';
+        
+        // Update Nav
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(navEl) navEl.classList.add('active');
+        
+        // Refresh Logs
+        ozeSecurity.renderLogs();
+    };
+
+    // Patch existing functions to hide settings
+    const origLoadPage = window.loadPage;
+    window.loadPage = function(url, navEl) {
+        document.getElementById('ozeSettingsView').style.display = 'none';
+        document.querySelector('.topbar').style.display = 'flex';
+        document.querySelector('.workspace').style.display = 'flex';
+        origLoadPage(url, navEl);
+        // Re-apply shield on page load
+        setTimeout(() => ozeSecurity.applyShield(), 500);
+    };
+
+    const origOpenComm = window.openCommunication;
+    window.openCommunication = function(navEl) {
+        document.getElementById('ozeSettingsView').style.display = 'none';
+        origOpenComm(navEl);
+    };
+
+    // Initialize
+    ozeSecurity.init();
+
+    // Re-apply shield when iframe loads
+    document.getElementById('editorFrame').addEventListener('load', () => {
+        ozeSecurity.applyShield();
+    });
+
+})();
+</script>
+<script>
+(function() {
+    /* --- LOGOUT SYSTEM EXTENSION --- */
+    const container = document.querySelector('#ozeSettingsView .oze-set-container');
+    if(container) {
+        const logoutCard = document.createElement('div');
+        logoutCard.className = 'oze-set-card';
+        logoutCard.style.gridColumn = '1 / -1';
+        logoutCard.style.border = '1px solid #fee2e2';
+        logoutCard.innerHTML = `
+            <div class="oze-set-head" style="border-bottom-color:#fee2e2">
+                <div class="oze-set-h-title" style="color:#ef4444">Session Management</div>
+                <i class="fas fa-sign-out-alt oze-set-icon" style="color:#ef4444"></i>
+            </div>
+            <p style="font-size:13px; color:#64748b; margin-bottom:20px">Securely end your session. This will immediately lock the dashboard.</p>
+            <button class="oze-btn-action oze-btn-red" onclick="ozeSecurity.logout()">
+                <i class="fas fa-power-off"></i> Log Out
+            </button>
+        `;
+        container.appendChild(logoutCard);
+    }
+    if(window.ozeSecurity) {
+        window.ozeSecurity.logout = function() {
+            if(!this.config.hash) return alert("Please set a security password first.");
+            this.lock(true);
+            this.log('Manual Logout');
+            this.resetTimer();
+        };
+    }
+})();
+</script>
+<!-- SETTINGS & SECURITY SYSTEM END -->
+
+<!-- OZE PORTFOLIO EDITOR ENHANCEMENT -->
+<script>
+(function() {
+    const frame = document.getElementById('editorFrame');
+
+    frame.addEventListener('load', () => {
+        const doc = frame.contentDocument;
+        if (!doc || !frame.contentWindow.location.href.includes('portfolio.html')) return;
+
+        // 1. Inject Styles
+        const styleId = 'oze-editor-enhancement-styles';
+        if (!doc.getElementById(styleId)) {
+            const style = doc.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                .oze-pro-menu-btn {
+                    position: absolute; top: 10px; right: 10px;
+                    width: 32px; height: 32px; background: #fff;
+                    border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; z-index: 900; opacity: 0;
+                    transition: opacity 0.2s, transform 0.2s;
+                    color: #333; font-size: 16px;
+                }
+                .card:hover .oze-pro-menu-btn, .oze-editable-text:hover .oze-pro-menu-btn, .oze-pro-menu-btn.active {
+                    opacity: 1; transform: scale(1);
+                }
+                .oze-pro-menu-dropdown {
+                    position: absolute; top: 45px; right: 0;
+                    background: #fff; border-radius: 8px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                    width: 180px; display: none; flex-direction: column;
+                    z-index: 901; overflow: hidden; border: 1px solid #e2e8f0;
+                    animation: ozeSlideDown 0.2s ease;
+                }
+                .oze-pro-menu-dropdown.active { display: flex; }
+                .oze-menu-item {
+                    padding: 10px 16px; font-size: 13px; color: #1e293b;
+                    cursor: pointer; display: flex; align-items: center; gap: 10px;
+                    transition: background 0.1s; font-family: 'Inter', sans-serif;
+                    font-weight: 500; border: none; background: none; width: 100%; text-align: left;
+                }
+                .oze-menu-item:hover { background: #f1f5f9; color: #38bdf8; }
+                .oze-menu-item.danger { color: #ef4444; border-top: 1px solid #f1f5f9; }
+                .oze-menu-item.danger:hover { background: #fef2f2; }
+                
+                .oze-folder-header {
+                    grid-column: 1 / -1; background: #1e293b; color: #fff;
+                    padding: 15px 20px; border-radius: 8px; margin: 20px 0;
+                    font-family: 'Inter', sans-serif; font-weight: 600;
+                    display: flex; justify-content: space-between; align-items: center;
+                    cursor: pointer;
+                }
+                .oze-folder-header i { transition: transform 0.3s; }
+                .oze-folder-header.collapsed i { transform: rotate(-90deg); }
+                
+                .oze-drag-active { outline: 2px dashed #38bdf8; cursor: move !important; opacity: 0.7; }
+                
+                @keyframes ozeSlideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+            `;
+            doc.head.appendChild(style);
+        }
+
+        // 2. Init Elements
+        initPortfolioElements(doc);
+
+        // Observer for new elements
+        const observer = new MutationObserver(() => initPortfolioElements(doc));
+        observer.observe(doc.body, { childList: true, subtree: true });
+    });
+
+    function initPortfolioElements(doc) {
+        // Cards
+        doc.querySelectorAll('.card').forEach(card => {
+            if (card.querySelector('.oze-pro-menu-btn')) return;
+            attachMenu(card, 'image', doc);
+        });
+
+        // Standalone Text
+        doc.querySelectorAll('h1, h2, h3, p').forEach(el => {
+            if (el.closest('.card')) return; // handled by card
+            if (el.querySelector('.oze-pro-menu-btn')) return;
+            el.classList.add('oze-editable-text');
+            el.style.position = 'relative';
+            attachMenu(el, 'text', doc);
+        });
+    }
+
+    function attachMenu(target, type, doc) {
+        const btn = doc.createElement('div');
+        btn.className = 'oze-pro-menu-btn';
+        btn.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // Close existing
+            closeAllMenus(doc);
+
+            // Create Dropdown dynamically in body to avoid clipping
+            const menu = doc.createElement('div');
+            menu.className = 'oze-pro-menu-dropdown active';
+            
+            // Build Options
+            let html = '';
+            
+            // 1. Move
+            html += `<button class="oze-menu-item" data-action="move"><i class="fas fa-arrows-alt"></i> Move</button>`;
+            
+            if (type === 'image') {
+                // 2. Replace
+                html += `<button class="oze-menu-item" data-action="replace"><i class="fas fa-sync-alt"></i> Replace</button>`;
+                // 3. Add
+                html += `<button class="oze-menu-item" data-action="add"><i class="fas fa-plus"></i> Add Next</button>`;
+                // 4. Folder
+                html += `<button class="oze-menu-item" data-action="folder"><i class="fas fa-folder-plus"></i> Create Folder</button>`;
+                // 5. Edit
+                html += `<button class="oze-menu-item" data-action="edit"><i class="fas fa-font"></i> Edit Caption</button>`;
+            } else {
+                // Text options
+                html += `<button class="oze-menu-item" data-action="edit"><i class="fas fa-pen"></i> Edit Text</button>`;
+            }
+            
+            // 6. Delete
+            html += `<button class="oze-menu-item danger" data-action="delete"><i class="fas fa-trash"></i> Delete</button>`;
+            
+            menu.innerHTML = html;
+            doc.body.appendChild(menu);
+
+            // Position
+            const rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.left = (rect.right - 180) + 'px'; // 180 is width
+
+            // Handle clicks
+            menu.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const actionBtn = ev.target.closest('.oze-menu-item');
+                if(actionBtn) {
+                    handleAction(actionBtn.dataset.action, target, doc);
+                    menu.remove();
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Close logic
+            btn.classList.add('active');
+            const close = () => {
+                menu.remove();
+                btn.classList.remove('active');
+                doc.removeEventListener('click', close);
+                doc.removeEventListener('scroll', close, true);
+            };
+            setTimeout(() => doc.addEventListener('click', close), 0);
+            doc.addEventListener('scroll', close, true);
+        });
+
+        target.appendChild(btn);
+    }
+
+    function closeAllMenus(doc) {
+        doc.querySelectorAll('.oze-pro-menu-dropdown').forEach(m => m.remove());
+        doc.querySelectorAll('.oze-pro-menu-btn.active').forEach(b => b.classList.remove('active'));
+    }
+
+    function handleAction(action, target, doc) {
+        switch(action) {
+            case 'move':
+                toggleDrag(target, doc);
+                break;
+            case 'replace':
+                if (window.openMediaLibrary) {
+                    window.openMediaLibrary((url) => {
+                        const img = target.querySelector('img');
+                        if(img) img.src = url;
+                    });
+                }
+                break;
+            case 'add':
+                if (window.openMediaLibrary) {
+                    window.openMediaLibrary((url) => {
+                        const clone = target.cloneNode(true);
+                        const img = clone.querySelector('img');
+                        if(img) img.src = url;
+                        // Remove old menu to re-init
+                        const oldBtn = clone.querySelector('.oze-pro-menu-btn');
+                        if(oldBtn) oldBtn.remove();
+                        
+                        target.parentNode.insertBefore(clone, target.nextSibling);
+                    });
+                }
+                break;
+            case 'folder':
+                const name = prompt("Folder Name:");
+                if(name) {
+                    const header = doc.createElement('div');
+                    header.className = 'oze-folder-header';
+                    header.innerHTML = `<span>${name}</span> <i class="fas fa-chevron-down"></i>`;
+                    header.onclick = () => {
+                        header.classList.toggle('collapsed');
+                        let next = header.nextElementSibling;
+                        while(next && !next.classList.contains('oze-folder-header')) {
+                            next.style.display = header.classList.contains('collapsed') ? 'none' : '';
+                            next = next.nextElementSibling;
+                        }
+                    };
+                    target.parentNode.insertBefore(header, target);
+                }
+                break;
+            case 'edit':
+                if (target.classList.contains('card')) {
+                    const title = target.querySelector('.title');
+                    if(title) {
+                        const newTxt = prompt("Edit Caption:", title.innerText);
+                        if(newTxt !== null) title.innerText = newTxt;
+                    }
+                } else {
+                    target.contentEditable = true;
+                    target.focus();
+                    target.addEventListener('blur', function onBlur() {
+                        target.contentEditable = false;
+                        target.removeEventListener('blur', onBlur);
+                    });
+                }
+                break;
+            case 'delete':
+                if(confirm("Delete this item?")) target.remove();
+                break;
+        }
+    }
+
+    function toggleDrag(target, doc) {
+        const isDraggable = target.draggable;
+        if (isDraggable) {
+            target.draggable = false;
+            target.classList.remove('oze-drag-active');
+            target.removeEventListener('dragstart', handleDragStart);
+            target.removeEventListener('dragover', handleDragOver);
+            target.removeEventListener('drop', handleDrop);
+        } else {
+            target.draggable = true;
+            target.classList.add('oze-drag-active');
+            target.addEventListener('dragstart', handleDragStart);
+            target.parentNode.addEventListener('dragover', handleDragOver);
+            target.parentNode.addEventListener('drop', handleDrop);
+        }
+    }
+
+    let dragSrc = null;
+    function handleDragStart(e) {
+        dragSrc = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
+        this.style.opacity = '0.4';
+    }
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+    function handleDrop(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const target = e.target.closest('.card, .oze-folder-header');
+        if (dragSrc !== target && target) {
+            target.parentNode.insertBefore(dragSrc, target);
+        }
+        dragSrc.style.opacity = '1';
+        return false;
+    }
+
+})();
+</script>
+
+<!-- FIX & ENHANCEMENT SCRIPT -->
+<script>
+(function() {
+    // 1. OVERRIDE setupCard to fix click blocking
+    window.setupCard = function(card, doc) {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.oze-pro-menu-btn') || e.target.closest('.oze-pro-menu-dropdown')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        }, true);
+    };
+
+    // 2. ROBUST MENU LOGIC
+    const frame = document.getElementById('editorFrame');
+
+    function saveState(doc) {
+        localStorage.setItem('oze_autosave_content', doc.body.innerHTML);
+    }
+
+    function initMenuFixer() {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+
+        const observer = new MutationObserver(() => {
+            const btns = doc.querySelectorAll('.oze-pro-menu-btn:not(.oze-fixed)');
+            btns.forEach(btn => {
+                btn.classList.add('oze-fixed');
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openRobustMenu(newBtn, doc);
+                });
+            });
+        });
+        observer.observe(doc.body, { childList: true, subtree: true });
+    }
+
+    function openRobustMenu(btn, doc) {
+        doc.querySelectorAll('.oze-pro-menu-dropdown').forEach(m => m.remove());
+        doc.querySelectorAll('.oze-pro-menu-btn.active').forEach(b => b.classList.remove('active'));
+
+        btn.classList.add('active');
+        const target = btn.parentNode;
+        const isImage = target.classList.contains('card');
+
+        const menu = doc.createElement('div');
+        menu.className = 'oze-pro-menu-dropdown active';
+        
+        let html = '<button class="oze-menu-item" data-action="move"><i class="fas fa-arrows-alt"></i> Move</button>';
+        
+        if (isImage) {
+            html += '<button class="oze-menu-item" data-action="replace"><i class="fas fa-sync-alt"></i> Replace</button>';
+            html += '<button class="oze-menu-item" data-action="add"><i class="fas fa-plus"></i> Add</button>';
+            html += '<button class="oze-menu-item" data-action="folder"><i class="fas fa-folder-plus"></i> Create Folder</button>';
+            html += '<button class="oze-menu-item" data-action="edit"><i class="fas fa-font"></i> Edit Caption</button>';
+        } else {
+            html += '<button class="oze-menu-item" data-action="edit"><i class="fas fa-pen"></i> Edit Text</button>';
+        }
+        
+        html += '<button class="oze-menu-item danger" data-action="delete"><i class="fas fa-trash"></i> Delete</button>';
+        
+        menu.innerHTML = html;
+        doc.body.appendChild(menu);
+
+        const rect = target.getBoundingClientRect();
+        const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
+        const scrollLeft = doc.documentElement.scrollLeft || doc.body.scrollLeft;
+        
+        menu.style.position = 'absolute';
+        menu.style.top = (rect.top + scrollTop + 10) + 'px';
+        menu.style.left = (rect.right + scrollLeft - 180 - 10) + 'px';
+
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const item = e.target.closest('.oze-menu-item');
+            if (item) {
+                executeAction(item.dataset.action, target, doc);
+                menu.remove();
+                btn.classList.remove('active');
+            }
+        });
+
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                menu.remove();
+                btn.classList.remove('active');
+                doc.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => doc.addEventListener('click', closeMenu), 0);
+    }
+
+    function executeAction(action, target, doc) {
+        switch(action) {
+            case 'move':
+                enableDrag(target, doc);
+                break;
+            case 'replace':
+                window.openMediaLibrary((url) => {
+                    const img = target.querySelector('img');
+                    if(img) { img.src = url; saveState(doc); }
+                });
+                break;
+            case 'add':
+                window.openMediaLibrary((url) => {
+                    const clone = target.cloneNode(true);
+                    const img = clone.querySelector('img');
+                    if(img) img.src = url;
+                    const oldBtn = clone.querySelector('.oze-pro-menu-btn');
+                    if(oldBtn) oldBtn.remove();
+                    target.parentNode.insertBefore(clone, target.nextSibling);
+                    saveState(doc);
+                });
+                break;
+            case 'folder':
+                const name = prompt("Folder Name:");
+                if(name) {
+                    const header = doc.createElement('div');
+                    header.className = 'oze-folder-header';
+                    header.innerHTML = `<span>${name}</span> <i class="fas fa-chevron-down"></i>`;
+                    header.onclick = () => {
+                        header.classList.toggle('collapsed');
+                        let next = header.nextElementSibling;
+                        while(next && !next.classList.contains('oze-folder-header')) {
+                            next.style.display = header.classList.contains('collapsed') ? 'none' : '';
+                            next = next.nextElementSibling;
+                        }
+                    };
+                    target.parentNode.insertBefore(header, target);
+                    saveState(doc);
+                }
+                break;
+            case 'edit':
+                if (target.classList.contains('card')) {
+                    const title = target.querySelector('.title');
+                    if(title) {
+                        const txt = prompt("Edit Caption:", title.innerText);
+                        if(txt !== null) { title.innerText = txt; saveState(doc); }
+                    }
+                } else {
+                    target.contentEditable = true;
+                    target.focus();
+                    const onBlur = () => {
+                        target.contentEditable = false;
+                        target.removeEventListener('blur', onBlur);
+                        saveState(doc);
+                    };
+                    target.addEventListener('blur', onBlur);
+                }
+                break;
+            case 'delete':
+                if(confirm("Delete this item?")) {
+                    target.remove();
+                    saveState(doc);
+                }
+                break;
+        }
+    }
+
+    function enableDrag(target, doc) {
+        target.draggable = true;
+        target.style.outline = "2px dashed #38bdf8";
+        target.style.cursor = "move";
+        
+        const onDragStart = (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', '');
+            window._dragSrcEl = target;
+            target.style.opacity = '0.4';
+        };
+        
+        const onDragOver = (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        };
+        
+        const onDrop = (e) => {
+            e.stopPropagation();
+            const dropTarget = e.target.closest('.card, .oze-folder-header, h1, h2, p');
+            if (window._dragSrcEl && dropTarget && window._dragSrcEl !== dropTarget) {
+                dropTarget.parentNode.insertBefore(window._dragSrcEl, dropTarget);
+                saveState(doc);
+            }
+            return false;
+        };
+        
+        const onDragEnd = (e) => {
+            target.style.opacity = '1';
+            target.draggable = false;
+            target.style.outline = "";
+            target.style.cursor = "";
+            target.removeEventListener('dragstart', onDragStart);
+            doc.body.removeEventListener('dragover', onDragOver);
+            doc.body.removeEventListener('drop', onDrop);
+            target.removeEventListener('dragend', onDragEnd);
+        };
+
+        target.addEventListener('dragstart', onDragStart);
+        doc.body.addEventListener('dragover', onDragOver);
+        doc.body.addEventListener('drop', onDrop);
+        target.addEventListener('dragend', onDragEnd);
+    }
+
+    frame.addEventListener('load', () => {
+        if (state.currentPage && state.currentPage.includes('portfolio.html')) {
+            setTimeout(initMenuFixer, 200);
+        }
+    });
+})();
+</script>
+
+<!-- FOOTER CONTROL SYSTEM EXTENSION -->
+<script>
+(function() {
+    const frame = document.getElementById('editorFrame');
+
+    function initFooterControl() {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+
+        // 1. Restore Footer Content
+        const savedFooter = localStorage.getItem('oze_footer_content');
+        const footer = doc.querySelector('footer');
+        if (footer && savedFooter) {
+            footer.innerHTML = savedFooter;
+        }
+
+        if (!footer) return;
+
+        // 2. Inject Styles
+        if (!doc.getElementById('oze-footer-styles')) {
+            const style = doc.createElement('style');
+            style.id = 'oze-footer-styles';
+            style.textContent = `
+                .oze-footer-btn {
+                    position: absolute; top: 10px; right: 10px;
+                    width: 32px; height: 32px; background: #fff;
+                    border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; z-index: 900; opacity: 0;
+                    transition: opacity 0.2s, transform 0.2s;
+                    color: #333; font-size: 16px;
+                }
+                footer { position: relative !important; transition: outline 0.2s; }
+                footer:hover .oze-footer-btn, .oze-footer-btn.active { opacity: 1; transform: scale(1); }
+                .oze-footer-menu {
+                    position: absolute; top: 45px; right: 10px;
+                    background: #fff; border-radius: 8px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                    width: 160px; display: none; flex-direction: column;
+                    z-index: 901; overflow: hidden; border: 1px solid #e2e8f0;
+                    animation: ozeSlideDown 0.2s ease;
+                }
+                .oze-footer-menu.active { display: flex; }
+                .oze-footer-item {
+                    padding: 10px 16px; font-size: 13px; color: #1e293b;
+                    cursor: pointer; display: flex; align-items: center; gap: 10px;
+                    transition: background 0.1s; font-family: 'Inter', sans-serif;
+                    font-weight: 500; border: none; background: none; width: 100%; text-align: left;
+                }
+                .oze-footer-item:hover { background: #f1f5f9; color: #38bdf8; }
+                .oze-footer-item.disabled { color: #94a3b8; cursor: not-allowed; }
+                .oze-footer-item.disabled:hover { background: none; color: #94a3b8; }
+                .oze-drag-mode { outline: 2px dashed #38bdf8; cursor: move !important; }
+            `;
+            doc.head.appendChild(style);
+        }
+
+        // 3. Create Control Button (Idempotent check)
+        if (footer.querySelector('.oze-footer-btn')) return;
+
+        const btn = doc.createElement('div');
+        btn.className = 'oze-footer-btn';
+        btn.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // Close existing menus
+            doc.querySelectorAll('.oze-footer-menu').forEach(m => m.remove());
+            
+            const menu = doc.createElement('div');
+            menu.className = 'oze-footer-menu active';
+            
+            menu.innerHTML = `
+                <button class="oze-footer-item" data-action="edit"><i class="fas fa-pen"></i> Edit</button>
+                <button class="oze-footer-item" data-action="update"><i class="fas fa-save"></i> Update</button>
+                <button class="oze-footer-item" data-action="move"><i class="fas fa-arrows-alt"></i> Move</button>
+                <button class="oze-footer-item disabled"><i class="fas fa-trash"></i> Delete</button>
+                <button class="oze-footer-item" data-action="cancel"><i class="fas fa-times"></i> Cancel</button>
+            `;
+            
+            footer.appendChild(menu);
+            btn.classList.add('active');
+
+            menu.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const item = ev.target.closest('.oze-footer-item');
+                if (!item || item.classList.contains('disabled')) return;
+                
+                const action = item.dataset.action;
+                handleFooterAction(action, footer, doc, btn, menu);
+            });
+
+            const closeMenu = (ev) => {
+                if (menu && !menu.contains(ev.target) && ev.target !== btn) {
+                    menu.remove();
+                    btn.classList.remove('active');
+                    doc.removeEventListener('click', closeMenu);
+                }
+            };
+            setTimeout(() => doc.addEventListener('click', closeMenu), 0);
+        });
+
+        footer.appendChild(btn);
+    }
+
+    function handleFooterAction(action, footer, doc, btn, menu) {
+        // Close menu immediately for most actions
+        if(action !== 'update') { // Update needs to remove menu first
+             menu.remove();
+             btn.classList.remove('active');
+        }
+
+        switch(action) {
+            case 'edit':
+                footer.contentEditable = true;
+                footer.focus();
+                // Simple blur handler to turn off editable
+                const onBlur = () => {
+                    footer.contentEditable = false;
+                    footer.removeEventListener('blur', onBlur);
+                };
+                footer.addEventListener('blur', onBlur);
+                break;
+            case 'update':
+                footer.contentEditable = false;
+                // Remove UI elements before saving
+                btn.remove();
+                menu.remove();
+                
+                localStorage.setItem('oze_footer_content', footer.innerHTML);
+                
+                // Restore UI
+                initFooterControl();
+                alert('Footer content saved!');
+                break;
+            case 'move':
+                enableFooterDrag(footer, doc);
+                break;
+            case 'cancel':
+                // Already closed
+                break;
+        }
+    }
+
+    function enableFooterDrag(footer, doc) {
+        footer.draggable = true;
+        footer.classList.add('oze-drag-mode');
+        
+        const onDragStart = (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', '');
+            window._footerDragSrc = footer;
+            footer.style.opacity = '0.5';
+        };
+
+        const onDragOver = (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        };
+
+        const onDrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const target = e.target.closest('section, header, div, footer');
+            if (target && target !== footer && target.parentNode === footer.parentNode) {
+                target.parentNode.insertBefore(footer, target);
+            }
+        };
+
+        const onDragEnd = () => {
+            footer.draggable = false;
+            footer.classList.remove('oze-drag-mode');
+            footer.style.opacity = '1';
+            footer.removeEventListener('dragstart', onDragStart);
+            doc.body.removeEventListener('dragover', onDragOver);
+            doc.body.removeEventListener('drop', onDrop);
+            footer.removeEventListener('dragend', onDragEnd);
+        };
+
+        footer.addEventListener('dragstart', onDragStart);
+        doc.body.addEventListener('dragover', onDragOver);
+        doc.body.addEventListener('drop', onDrop);
+        footer.addEventListener('dragend', onDragEnd);
+    }
+
+    frame.addEventListener('load', initFooterControl);
+    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+        initFooterControl();
+    }
+})();
+</script>
+</body>
+</html>

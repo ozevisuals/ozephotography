@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oze Photography — Admin Access</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg: #0f172a;
+    --accent: #38bdf8;
+    --text: #e5e7eb;
+    --error: #f87171;
+    --glass: rgba(255, 255, 255, 0.03);
+    --border: rgba(255, 255, 255, 0.08);
+}
+
+* { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
+body {
+    margin: 0;
+    height: 100vh;
+    background-color: var(--bg);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    overflow: hidden;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: white;
+}
+
+p.subtitle {
+    margin: 0 0 30px 0;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 12px;
+    color: #94a3b8;
+    user-select: none;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+    margin-top: 10px;
+}
+
+button:hover {
+    filter: brightness(1.1);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:disabled {
+    background: #334155;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.message {
+    margin-top: 20px;
+    font-size: 13px;
+    text-align: center;
+    min-height: 20px;
+    transition: color 0.3s;
+}
+
+.error { color: var(--error); }
+.success { color: var(--accent); }
+
+/* Loading Spinner */
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(15, 23, 42, 0.3);
+    border-radius: 50%;
+    border-top-color: #0f172a;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+
+<div class="login-container">
+    <h1>Oze Photography</h1>
+    <p class="subtitle">Secure Admin Access</p>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Username" autocomplete="off" required>
+        </div>
+        
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Password" required>
+            <span class="toggle-password" onclick="togglePass()">SHOW</span>
+        </div>
+
+        <button type="submit" id="btn">
+            <span id="btnText">Sign In</span>
+            <div class="spinner" id="spinner"></div>
+        </button>
+    </form>
+
+    <div class="message" id="msg"></div>
+</div>
+
+<script>
+// CONFIGURATION
+const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+const spinner = document.getElementById("spinner");
+const btnText = document.getElementById("btnText");
+
+function togglePass() {
+    const input = document.getElementById("password");
+    const span = document.querySelector(".toggle-password");
+    if (input.type === "password") {
+        input.type = "text";
+        span.innerText = "HIDE";
+    } else {
+        input.type = "password";
+        span.innerText = "SHOW";
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    if (btn.disabled) return;
+
+    // UI Loading State
+    btnText.style.display = "none";
+    spinner.style.display = "block";
+    msg.innerText = "";
+
+    const email = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        msg.className = "message error";
+        msg.innerText = "Invalid credentials";
+        resetBtn();
+        return;
+    }
+
+    if (data.user?.user_metadata?.role === 'admin') {
+        window.location.href = "dashboard.html";
+    } else {
+        await supabase.auth.signOut();
+        msg.className = "message error";
+        msg.innerText = "Unauthorized access";
+        resetBtn();
+    }
+}
+
+function resetBtn() {
+    btn.disabled = false;
+    btn.style.background = "var(--accent)";
+    btnText.style.display = "block";
+    btnText.innerText = "Sign In";
+    spinner.style.display = "none";
+}
+</script>
+
+</body>
+</html>
