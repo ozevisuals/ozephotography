@@ -103,7 +103,7 @@
     @media (max-width:900px){
       header{padding:16px 20px}
       header.scrolled{padding:12px 20px}
-      nav{display:none}
+      /* nav{display:none} REMOVED FOR MOBILE MENU */
       .hero{grid-template-columns:1fr;padding:120px 20px 60px;text-align:center}
       .buttons a{margin:6px}
       .gallery,footer,.about-section,.contact-section{padding:60px 20px}
@@ -145,6 +145,31 @@
     .submit-btn:hover{transform:translateY(-2px);box-shadow:0 0 25px rgba(193,18,31,.4)}
     .submit-btn:active{transform:scale(.98)}
     ::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.6;cursor:pointer}
+
+    /* ===== MOBILE NAVIGATION (ADDED) ===== */
+    .hamburger{display:none;background:none;border:none;cursor:pointer;padding:10px;z-index:200}
+    .hamburger span{display:block;width:24px;height:2px;background:var(--fg);margin:6px 0;transition:.3s ease}
+
+    @media(max-width:900px){
+      .hamburger{display:block}
+      nav{
+        display:flex;
+        position:fixed;inset:0;background:var(--bg);
+        flex-direction:column;justify-content:center;align-items:center;
+        z-index:150;opacity:0;visibility:hidden;pointer-events:none;
+        transition:opacity .4s ease, visibility .4s
+      }
+      nav.active{opacity:1;visibility:visible;pointer-events:auto}
+      nav a{font-family:'Playfair Display',serif;font-size:32px;margin:20px 0;opacity:0;transform:translateY(15px);transition:.4s ease}
+      nav.active a{opacity:1;transform:none}
+      nav.active a:nth-child(1){transition-delay:.1s} nav.active a:nth-child(2){transition-delay:.15s}
+      nav.active a:nth-child(3){transition-delay:.2s} nav.active a:nth-child(4){transition-delay:.25s}
+      nav.active a:nth-child(5){transition-delay:.3s}
+      
+      .hamburger.active span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+      .hamburger.active span:nth-child(2){opacity:0}
+      .hamburger.active span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+    }
   </style>
 </head>
 <body>
@@ -159,6 +184,9 @@
     <a href="#">Services</a>
     <a href="#contact">Contact</a>
   </nav>
+  <button class="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
 
@@ -309,23 +337,23 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
 
 <script>
   const header = document.querySelector('header');
-  window.addEventListener('scroll',()=>{
+  window.addEventListener('scroll',() => {
     header.classList.toggle('scrolled', window.scrollY > 30);
   });
 
 
   const reveals = document.querySelectorAll('.hero-text, .hero-image, .trust, .gallery h2, .grid img, footer, .about-section, .contact-section');
-  reveals.forEach(el=>el.classList.add('reveal'));
+  reveals.forEach(el => el.classList.add('reveal'));
 
 
-  const io = new IntersectionObserver(entries=>{
-    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); });
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('show'); });
   },{threshold:0.15});
-  reveals.forEach(el=>io.observe(el));
+  reveals.forEach(el => io.observe(el));
 
 
   const heroImg = document.querySelector('.hero-image img');
-  window.addEventListener('mousemove',(e)=>{
+  window.addEventListener('mousemove',(e) => {
     const x = (e.clientX / window.innerWidth - .5) * 6;
     const y = (e.clientY / window.innerHeight - .5) * 6;
     heroImg.style.transform = `translate(${x}px, ${y}px)`;
@@ -337,15 +365,15 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
   const lightboxImg = document.getElementById('lightbox-img');
 
 
-  document.querySelectorAll('.grid img').forEach(img=>{
-    img.addEventListener('click',()=>{
+  document.querySelectorAll('.grid img').forEach(img => {
+    img.addEventListener('click',() => {
       lightboxImg.src = img.src;
       lightbox.style.display = 'flex';
     });
   });
 
 
-  lightbox.addEventListener('click',()=>{
+  lightbox.addEventListener('click',() => {
     lightbox.style.display = 'none';
   });
 
@@ -409,6 +437,25 @@ Whether it’s portraits, celebrations, or branding, we deliver stunning visuals
     window.location.href = `mailto:ozeblaise10@gmail.com?subject=Booking Request&body=${text.replace(/%0A/g, '%0D%0A')}`;
     closeBookingModal();
     bookingForm.reset();
+  });
+
+  /* ===== MOBILE MENU LOGIC (ADDED) ===== */
+  const hamburger = document.querySelector('.hamburger');
+  const nav = document.querySelector('nav');
+  const navLinks = document.querySelectorAll('nav a');
+
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    nav.classList.toggle('active');
+    document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : '';
+  });
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      hamburger.classList.remove('active');
+      nav.classList.remove('active');
+      document.body.style.overflow = '';
+    });
   });
 </script>
 

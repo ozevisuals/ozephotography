@@ -1,247 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oze Photography — Admin Access</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root {
-    --bg: #0f172a;
-    --accent: #38bdf8;
-    --text: #e5e7eb;
-    --error: #f87171;
-    --glass: rgba(255, 255, 255, 0.03);
-    --border: rgba(255, 255, 255, 0.08);
-}
+    <meta charset="UTF-8">
+    <title>Admin Login | Oze</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-* { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-body {
-    margin: 0;
-    height: 100vh;
-    background-color: var(--bg);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text);
-    overflow: hidden;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
 
-.login-container {
-    width: 100%;
-    max-width: 400px;
-    padding: 40px;
-    background: var(--glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-@keyframes fadeInUp {
-    to { opacity: 1; transform: translateY(0); }
-}
+        .login-box {
+            background: #fff;
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 14px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.3);
+            text-align: center;
+        }
 
-h1 {
-    margin: 0 0 8px 0;
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    color: white;
-}
+        h1 { margin-bottom: 10px; font-size: 24px; color: #1a1a1a; }
+        p { color: #666; margin-bottom: 30px; font-size: 14px; }
 
-p.subtitle {
-    margin: 0 0 30px 0;
-    color: #94a3b8;
-    font-size: 14px;
-}
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: white;
+            color: #444;
+            transition: all .2s ease;
+        }
 
-.input-group {
-    position: relative;
-    margin-bottom: 20px;
-}
+        button:hover {
+            background: #f9f9f9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
 
-input {
-    width: 100%;
-    padding: 14px 16px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: white;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    outline: none;
-}
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
 
-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-    background: rgba(0, 0, 0, 0.4);
-}
+        #googleBtn img { width: 20px; }
 
-.toggle-password {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 12px;
-    color: #94a3b8;
-    user-select: none;
-}
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4285f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-button {
-    width: 100%;
-    padding: 14px;
-    background: var(--accent);
-    color: #0f172a;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: pointer;
-    transition: transform 0.2s, filter 0.2s;
-    margin-top: 10px;
-}
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-button:hover {
-    filter: brightness(1.1);
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-button:disabled {
-    background: #334155;
-    color: #64748b;
-    cursor: not-allowed;
-}
-
-.message {
-    margin-top: 20px;
-    font-size: 13px;
-    text-align: center;
-    min-height: 20px;
-    transition: color 0.3s;
-}
-
-.error { color: var(--error); }
-.success { color: var(--accent); }
-
-/* Loading Spinner */
-.spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(15, 23, 42, 0.3);
-    border-radius: 50%;
-    border-top-color: #0f172a;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-</style>
+        #msg {
+            margin-top: 20px;
+            color: #dc2626;
+            font-size: 14px;
+            min-height: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="login-container">
-    <h1>Oze Photography</h1>
-    <p class="subtitle">Secure Admin Access</p>
+<div class="login-box">
+    <h1>Admin Login</h1>
+    <p>Please sign in with your Google account</p>
 
-    <form id="loginForm" onsubmit="handleLogin(event)">
-        <div class="input-group">
-            <input type="text" id="username" placeholder="Username" autocomplete="off" required>
-        </div>
-        
-        <div class="input-group">
-            <input type="password" id="password" placeholder="Password" required>
-            <span class="toggle-password" onclick="togglePass()">SHOW</span>
-        </div>
+    <button id="googleBtn">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+        <span id="btnText">Continue with Google</span>
+    </button>
 
-        <button type="submit" id="btn">
-            <span id="btnText">Sign In</span>
-            <div class="spinner" id="spinner"></div>
-        </button>
-    </form>
-
-    <div class="message" id="msg"></div>
+    <div id="msg"></div>
 </div>
 
 <script>
-// CONFIGURATION
-const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // 1. SUPABASE CONFIGURATION
+    const SUPABASE_URL = "https://otcdxuyglastyloenpvf.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_pHXDJuMQYZ-hpqpvPKL7GQ_QreyZg27";
 
-const msg = document.getElementById("msg");
-const btn = document.getElementById("btn");
-const spinner = document.getElementById("spinner");
-const btnText = document.getElementById("btnText");
+    // Initialize the client with a unique name 'sbClient' to avoid library conflicts
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function togglePass() {
-    const input = document.getElementById("password");
-    const span = document.querySelector(".toggle-password");
-    if (input.type === "password") {
-        input.type = "text";
-        span.innerText = "HIDE";
-    } else {
-        input.type = "password";
-        span.innerText = "SHOW";
-    }
-}
+    const googleBtn = document.getElementById('googleBtn');
+    const msg = document.getElementById('msg');
+    const btnText = document.getElementById('btnText');
 
-async function handleLogin(e) {
-    e.preventDefault();
-    if (btn.disabled) return;
+    // 2. LOGIN LOGIC
+    googleBtn.addEventListener('click', async () => {
+        // Clear old messages and show loading state
+        msg.textContent = "";
+        googleBtn.disabled = true;
+        btnText.innerHTML = '<div class="spinner"></div>';
 
-    // UI Loading State
-    btnText.style.display = "none";
-    spinner.style.display = "block";
-    msg.innerText = "";
+        const { error } = await sbClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // Must match your Live Server address AND Supabase Dashboard settings
+                redirectTo: 'http://127.0.0.1:5501/admin/dashboard.html'
+            }
+        });
 
-    const email = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        if (error) {
+            msg.textContent = "Error: " + error.message;
+            btnText.textContent = "Continue with Google";
+            googleBtn.disabled = false;
+        }
     });
 
-    if (error) {
-        msg.className = "message error";
-        msg.innerText = "Invalid credentials";
-        resetBtn();
-        return;
-    }
-
-    if (data.user?.user_metadata?.role === 'admin') {
-        window.location.href = "dashboard.html";
-    } else {
-        await supabase.auth.signOut();
-        msg.className = "message error";
-        msg.innerText = "Unauthorized access";
-        resetBtn();
-    }
-}
-
-function resetBtn() {
-    btn.disabled = false;
-    btn.style.background = "var(--accent)";
-    btnText.style.display = "block";
-    btnText.innerText = "Sign In";
-    spinner.style.display = "none";
-}
+    // 3. AUTO-REDIRECT IF ALREADY LOGGED IN
+    (async () => {
+        const { data } = await sbClient.auth.getSession();
+        if (data?.session) {
+            window.location.href = "http://127.0.0.1:5501/admin/dashboard.html";
+        }
+    })();
 </script>
 
 </body>
